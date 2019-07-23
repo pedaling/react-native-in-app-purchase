@@ -9,7 +9,7 @@
 
 #import <StoreKit/StoreKit.h>
 
-@interface RNInAppPurchase : NSObject <RCTBridgeModule, SKProductsRequestDelegate, SKPaymentTransactionObserver> {
+@interface RNInAppPurchase : RCTEventEmitter <RCTBridgeModule, SKProductsRequestDelegate, SKPaymentTransactionObserver> {
 }
 
 @end

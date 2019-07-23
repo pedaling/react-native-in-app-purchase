@@ -1,7 +1,7 @@
 {
   "name": "react-native-in-app-purchase",
   "version": "1.0.0",
-  "description": "Dead simple in app purchase library for React Native",
+  "description": "👻 A dead simple in app purchase library for React Native",
   "main": "index.js",
   "keywords": [
     "react-native",
