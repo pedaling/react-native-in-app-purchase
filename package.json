@@ -1,16 +1,15 @@
-
 {
   "name": "react-native-in-app-purchase",
   "version": "1.0.0",
-  "description": "",
+  "description": "Dead simple in app purchase library for React Native",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [
-    "react-native"
+    "react-native",
+    "in-app-purchase",
+    "purchase",
+    "billing"
   ],
-  "author": "InJung Chung <mu29@yeoubi.net>",
+  "author": "Injung Chung <mu29@yeoubi.net>",
   "license": "MIT",
   "peerDependencies": {
     "react-native": "*"
