@@ -1,20 +1,17 @@
 package net.yeoubi.iap;
 
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
-import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
-import com.android.billingclient.api.ConsumeResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
-import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -51,31 +48,13 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         return "RNInAppPurchase";
     }
 
-    @Nullable
-    @Override
-    public Map<String, Object> getConstants() {
-        final Map<String, Object> constants = new HashMap<>();
-
-        constants.put("EVENT_GET_PRODUCT_LIST_SUCCESS", "EVENT:GET_PRODUCT_LIST_SUCCESS");
-        constants.put("EVENT_GET_PRODUCT_LIST_FAILURE", "EVENT:GET_PRODUCT_LIST_FAILURE");
-        constants.put("EVENT_PURCHASE_SUCCESS", "EVENT:PURCHASE_SUCCESS");
-        constants.put("EVENT_PURCHASE_FAILURE", "EVENT:PURCHASE_FAILURE");
-        constants.put("EVENT_FINALIZE_SUCCESS", "EVENT:FINALIZE_SUCCESS");
-        constants.put("EVENT_FINALIZE_FAILURE", "EVENT:FINALIZE_FAILURE");
-        constants.put("EVENT_RESTORE_SUCCESS", "EVENT:RESTORE_SUCCESS");
-        constants.put("EVENT_RESTORE_FAILURE", "EVENT:RESTORE_FAILURE");
-        constants.put("EVENT_CONNECTION_FAILURE", "EVENT:CONNECTION_FAILURE");
-
-        return constants;
-    }
-
     /**
      * Initialize billing client.
      *
      * @param promise Promise that receives initialization result.
      */
     @ReactMethod
-    public void init(final Promise promise) {
+    public void configure(final Promise promise) {
         client = BillingClient.newBuilder(reactContext)
                 .enablePendingPurchases()
                 .setListener(this)
@@ -90,12 +69,12 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     promise.resolve(true);
                 }
 
-                promise.reject("init", "Billing service setup failed with code " + code);
+                promise.reject("configure", "Billing service setup failed with code " + code);
             }
 
             @Override
             public void onBillingServiceDisconnected() {
-                promise.reject("init", "Billing service disconnected");
+                promise.reject("configure", "Billing service disconnected");
             }
         });
     }
@@ -128,7 +107,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             // Query in-app items
             client.querySkuDetailsAsync(inAppParams, (inAppResult, inAppDetailsList) -> {
                 if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    sendBillingError("EVENT:GET_PRODUCT_LIST_FAILURE", inAppResult);
+                    sendBillingError("@iap:onProductListFailure", inAppResult);
                     return;
                 }
 
@@ -147,7 +126,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 // Query subscription items
                 client.querySkuDetailsAsync(subscribeParams, (subscribeResult, subscribeDetailsList) -> {
                     if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                        sendBillingError("EVENT:GET_PRODUCT_LIST_FAILURE", subscribeResult);
+                        sendBillingError("@iap:onProductListFailure", subscribeResult);
                         return;
                     }
 
@@ -163,7 +142,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                         skuDetailsMap.put(skuDetails.getSku(), skuDetails);
                     }
 
-                    sendEvent("EVENT:GET_PRODUCT_LIST_SUCCESS", items);
+                    sendEvent("@iap:onProductListSuccess", items);
                 });
             });
         });
@@ -199,7 +178,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * @param isConsumable Whether it is consumable or not.
      */
     @ReactMethod
-    public void finalize(ReadableMap purchase, boolean isConsumable) {
+    public void finalize(ReadableMap purchase, boolean isConsumable, final Promise promise) {
         tryConnect(() -> {
             String token = purchase.getString("purchaseToken");
 
@@ -210,14 +189,14 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
                 client.consumeAsync(params, (result, purchaseToken) -> {
                     if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                        sendBillingError("EVENT:FINALIZE_FAILURE", result);
+                        promise.reject("finalize", result.getDebugMessage());
                         return;
                     }
 
                     WritableMap event = Arguments.createMap();
                     event.putString("message", result.getDebugMessage());
 
-                    sendEvent("EVENT:FINALIZE_SUCCESS", event);
+                    promise.resolve(event);
                 });
                 return;
             }
@@ -228,13 +207,14 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
             client.acknowledgePurchase(acknowledgePurchaseParams, (result) -> {
                 if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    sendBillingError("EVENT:FINALIZE_FAILURE", result);
+                    promise.reject("finalize", result.getDebugMessage());
+                    return;
                 }
 
                 WritableMap event = Arguments.createMap();
                 event.putString("message", result.getDebugMessage());
 
-                sendEvent("EVENT:FINALIZE_SUCCESS", event);
+                promise.resolve(event);
             });
         });
     }
@@ -245,18 +225,18 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * {@link #finalize} method.
      */
     @ReactMethod
-    public void restore() {
+    public void restore(final Promise promise) {
         tryConnect(() -> {
             Purchase.PurchasesResult inAppResult = client.queryPurchases(BillingClient.SkuType.INAPP);
             Purchase.PurchasesResult subscriptionResult = client.queryPurchases(BillingClient.SkuType.SUBS);
 
             if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                sendBillingError("EVENT:RESTORE_FAILURE", inAppResult.getBillingResult());
+                promise.reject("restore", inAppResult.getBillingResult().getDebugMessage());
                 return;
             }
 
             if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                sendBillingError("EVENT:RESTORE_FAILURE", subscriptionResult.getBillingResult());
+                promise.reject("restore", subscriptionResult.getBillingResult().getDebugMessage());
                 return;
             }
 
@@ -279,7 +259,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 items.pushMap(item);
             }
 
-            sendEvent("EVENT:RESTORE_SUCCESS", items);
+            promise.resolve(items);
         });
     }
 
@@ -297,14 +277,6 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         sendEvent(errorName, event);
     }
 
-    private void sendBillingError(String errorName, Integer code, String message) {
-        WritableMap event = Arguments.createMap();
-        event.putInt("code", code);
-        event.putString("message", message);
-
-        sendEvent(errorName, event);
-    }
-
     private void tryConnect(final Runnable runnable) {
         if (client.isReady()) {
             runnable.run();
@@ -318,20 +290,18 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     runnable.run();
                 }
 
-                sendBillingError("EVENT:CONNECTION_FAILURE", result);
+                sendBillingError("@iap:onConnectionFailure", result);
             }
 
             @Override
-            public void onBillingServiceDisconnected() {
-                sendBillingError("EVENT:CONNECTION_FAILURE", -1, "Billing service disconnected");
-            }
+            public void onBillingServiceDisconnected() {}
         });
     }
 
     @Override
     public void onPurchasesUpdated(BillingResult result, @Nullable List<Purchase> purchases) {
         if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-            sendBillingError("EVENT:PURCHASE_FAILURE", result);
+            sendBillingError("@iap:onPurchaseFailure", result);
             return;
         }
 
@@ -344,7 +314,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 item.putString("receipt", purchase.getOriginalJson());
                 item.putString("purchaseToken", purchase.getPurchaseToken());
 
-                sendEvent("EVENT:PURCHASE_SUCCESS", item);
+                sendEvent("@iap:onPurchaseSuccess", item);
             }
         }
     }
