@@ -4,8 +4,8 @@
 
 @interface RNInAppPurchase() <SKRequestDelegate> {
     BOOL hasListeners;
-    NSDictionary* productsMap;
-    NSDictionary* transactionsMap;
+    NSMutableDictionary* productsMap;
+    NSMutableDictionary* transactionsMap;
 }
 
 @end
@@ -16,8 +16,8 @@
     if (self = [super init]) {
         [[SKPaymentQueue defaultQueue] addTransactionObserver: self];
     }
-    productsMap = @{};
-    transactionsMap = @{};
+    productsMap = [[NSMutableDictionary alloc] init];
+    transactionsMap = [[NSMutableDictionary alloc] init];
 
     return self;
 }
@@ -26,8 +26,8 @@
     [[SKPaymentQueue defaultQueue] removeTransactionObserver: self];
 }
 
-- (dispatch_queue_t) methodQueue {
-    return dispatch_get_main_queue();
++ (BOOL) requiresMainQueueSetup {
+    return YES;
 }
 
 RCT_EXPORT_MODULE();
@@ -59,8 +59,8 @@ RCT_EXPORT_METHOD(purchase: (NSString*) productId) {
 RCT_EXPORT_METHOD(finalize: (NSDictionary*) purchase
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejector: (RCTPromiseRejectBlock) reject) {
-    NSString* productId = purchase[@"productId"];
-    SKPaymentTransaction* transaction = transactionsMap[productId];
+    NSString* transactionId = purchase[@"transactionId"];
+    SKPaymentTransaction* transaction = transactionsMap[transactionId];
     [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
     resolve(@{ @"message": @"Finalize success" });
 }
@@ -86,6 +86,7 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
                                @"receipt": [receipt base64EncodedStringWithOptions: 0]
                                };
 
+        [transactionsMap setObject: transaction forKey: transaction.transactionIdentifier];
         [items addObject: item];
     }
 
@@ -135,7 +136,7 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
                                @"description": description
                                };
         [items addObject: item];
-        [productsMap setValue: item forKey: product.productIdentifier];
+        [productsMap setObject: product forKey: product.productIdentifier];
     }
 
     [self sendEvent: @"iap:onProductListSuccess" body: items];
@@ -147,18 +148,20 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
             case SKPaymentTransactionStatePurchased: {
                 NSURL* receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
                 NSData* receipt = [[NSData alloc] initWithContentsOfURL: receiptURL];
-                
+
                 if (!receipt) {
                     [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
                     return;
                 }
-                
+
                 NSDictionary* item = @{
                                        @"productId": transaction.payment.productIdentifier,
                                        @"transactionId": transaction.transactionIdentifier,
                                        @"transactionDate": @(transaction.transactionDate.timeIntervalSince1970 * 1000),
                                        @"receipt": [receipt base64EncodedStringWithOptions: 0]
                                        };
+
+                [transactionsMap setObject: transaction forKey: transaction.transactionIdentifier];
                 [self sendEvent: @"iap:onPurchaseSuccess" body: item];
                 break;
             }
