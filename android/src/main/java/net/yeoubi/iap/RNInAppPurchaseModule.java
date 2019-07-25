@@ -107,7 +107,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             // Query in-app items
             client.querySkuDetailsAsync(inAppParams, (inAppResult, inAppDetailsList) -> {
                 if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    sendBillingError("iap:onProductListFailure", inAppResult);
+                    sendBillingError("iap:onFetchProductsFailure", inAppResult);
                     return;
                 }
 
@@ -126,7 +126,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 // Query subscription items
                 client.querySkuDetailsAsync(subscribeParams, (subscribeResult, subscribeDetailsList) -> {
                     if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                        sendBillingError("iap:onProductListFailure", subscribeResult);
+                        sendBillingError("iap:onFetchProductsFailure", subscribeResult);
                         return;
                     }
 
@@ -142,7 +142,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                         skuDetailsMap.put(skuDetails.getSku(), skuDetails);
                     }
 
-                    sendEvent("iap:onProductListSuccess", items);
+                    sendEvent("iap:onFetchProductsSuccess", items);
                 });
             });
         });
@@ -225,18 +225,18 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * {@link #finalize} method.
      */
     @ReactMethod
-    public void restore(final Promise promise) {
+    public void flush(final Promise promise) {
         tryConnect(() -> {
             Purchase.PurchasesResult inAppResult = client.queryPurchases(BillingClient.SkuType.INAPP);
             Purchase.PurchasesResult subscriptionResult = client.queryPurchases(BillingClient.SkuType.SUBS);
 
             if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                promise.reject("restore", inAppResult.getBillingResult().getDebugMessage());
+                promise.reject("flush", inAppResult.getBillingResult().getDebugMessage());
                 return;
             }
 
             if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                promise.reject("restore", subscriptionResult.getBillingResult().getDebugMessage());
+                promise.reject("flush", subscriptionResult.getBillingResult().getDebugMessage());
                 return;
             }
 

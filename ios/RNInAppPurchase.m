@@ -65,7 +65,7 @@ RCT_EXPORT_METHOD(finalize: (NSDictionary*) purchase
     resolve(@{ @"message": @"Finalize success" });
 }
 
-RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
+RCT_EXPORT_METHOD(flush: (RCTPromiseResolveBlock) resolve
                   rejector: (RCTPromiseRejectBlock) reject) {
     NSArray<SKPaymentTransaction*>* transactions = [[SKPaymentQueue defaultQueue] transactions];
     NSMutableArray* items = [NSMutableArray array];
@@ -113,8 +113,8 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
 
 - (NSArray<NSString*>*) supportedEvents {
     return @[
-             @"iap:onProductListSuccess",
-             @"iap:onProductListFailure",
+             @"iap:onFetchProductsSuccess",
+             @"iap:onFetchProductsFailure",
              @"iap:onPurchaseSuccess",
              @"iap:onPurchaseFailure"
              ];
@@ -143,7 +143,7 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
         [productsMap setObject: product forKey: product.productIdentifier];
     }
 
-    [self sendEvent: @"iap:onProductListSuccess" body: items];
+    [self sendEvent: @"iap:onFetchProductsSuccess" body: items];
 }
 
 - (void) paymentQueue: (SKPaymentQueue*) queue updatedTransactions: (NSArray<SKPaymentTransaction*>*) transactions {

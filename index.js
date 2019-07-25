@@ -7,27 +7,37 @@ import {
 
 const { RNInAppPurchase } = NativeModules;
 
+const ERROR = {
+  FETCH_PRODUCTS: 'FETCH_PRODUCTS',
+  PURCHASE: 'PURCHASE',
+  CONNECTION: 'CONNECTION',
+};
+
 const addListener = (event, listener) => Platform.select({
   ios: new NativeEventEmitter(RNInAppPurchase),
   android: DeviceEventEmitter,
 }).addListener(event, listener);
 
-const onProductListSuccess = e => addListener('iap:onProductListSuccess', e);
+const onFetchProducts = listener => addListener('iap:onFetchProductsSuccess', listener);
 
-const onProductListFailure = e => addListener('iap:onProductListFailure', e);
+const onPurchase = listener => addListener('iap:onPurchaseSuccess', listener);
 
-const onPurchaseSuccess = e => addListener('iap:onPurchaseSuccess', e);
-
-const onPurchaseFailure = e => addListener('iap:onPurchaseFailure', e);
+const onError = (listener) => {
+  if (Platform.OS === 'android') {
+    addListener('iap:onConnectionFailure', e => listener(Object.assign(e, { type: ERROR.CONNECTION })));
+  }
+  addListener('iap:onFetchProductsFailure', e => listener(Object.assign(e, { type: ERROR.FETCH_PRODUCTS })));
+  addListener('iap:onPurchaseFailure', e => listener(Object.assign(e, { type: ERROR.PURCHASE })));
+}
 
 export default {
   configure: RNInAppPurchase.configure,
   fetchProducts: RNInAppPurchase.fetchProducts,
   purchase: RNInAppPurchase.purchase,
-  restore: RNInAppPurchase.restore,
   finalize: RNInAppPurchase.finalize,
-  onProductListSuccess,
-  onProductListFailure,
-  onPurchaseSuccess,
-  onPurchaseFailure,
+  flush: RNInAppPurchase.flush,
+  onFetchProducts,
+  onPurchase,
+  onError,
+  ERROR,
 }
