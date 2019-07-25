@@ -22,7 +22,7 @@ const onPurchaseFailure = e => addListener('iap:onPurchaseFailure', e);
 
 export default {
   configure: RNInAppPurchase.configure,
-  getProductList: RNInAppPurchase.getProductList,
+  fetchProducts: RNInAppPurchase.fetchProducts,
   purchase: RNInAppPurchase.purchase,
   restore: RNInAppPurchase.restore,
   finalize: RNInAppPurchase.finalize,

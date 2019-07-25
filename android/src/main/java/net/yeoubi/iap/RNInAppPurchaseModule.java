@@ -86,7 +86,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * @param productIds The IDs of the items to retrieve.
      */
     @ReactMethod
-    public void getProductList(ReadableArray productIds) {
+    public void fetchProducts(ReadableArray productIds) {
         tryConnect(() -> {
             final List<String> skuList = new ArrayList<>();
 

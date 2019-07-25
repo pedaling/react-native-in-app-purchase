@@ -37,7 +37,7 @@ RCT_EXPORT_METHOD(configure: (RCTPromiseResolveBlock) resolve
     resolve(@([SKPaymentQueue canMakePayments]));
 }
 
-RCT_EXPORT_METHOD(getProductList: (NSArray*) productIds) {
+RCT_EXPORT_METHOD(fetchProducts: (NSArray*) productIds) {
     NSSet* identifiers = [NSSet setWithArray: productIds];
     SKProductsRequest* productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers: identifiers];
     productsRequest.delegate = self;
@@ -76,6 +76,10 @@ RCT_EXPORT_METHOD(restore: (RCTPromiseResolveBlock) resolve
 
         if (!receipt) {
             [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+            continue;
+        }
+
+        if (!transaction.transactionIdentifier) {
             continue;
         }
 
