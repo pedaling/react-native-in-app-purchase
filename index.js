@@ -8,9 +8,9 @@ import {
 const { RNInAppPurchase } = NativeModules;
 
 const addListener = (event, listener) => Platform.select({
-  ios: new NativeEventEmitter(RNInAppPurchase).addListener(event, listener),
-  android: DeviceEventEmitter.addListener(event, listener),
-});
+  ios: new NativeEventEmitter(RNInAppPurchase),
+  android: DeviceEventEmitter,
+}).addListener(event, listener);
 
 const onProductListSuccess = e => addListener('iap:onProductListSuccess', e);
 
