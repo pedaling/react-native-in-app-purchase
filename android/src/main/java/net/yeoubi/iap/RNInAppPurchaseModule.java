@@ -107,7 +107,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             // Query in-app items
             client.querySkuDetailsAsync(inAppParams, (inAppResult, inAppDetailsList) -> {
                 if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    sendBillingError("@iap:onProductListFailure", inAppResult);
+                    sendBillingError("iap:onProductListFailure", inAppResult);
                     return;
                 }
 
@@ -126,7 +126,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 // Query subscription items
                 client.querySkuDetailsAsync(subscribeParams, (subscribeResult, subscribeDetailsList) -> {
                     if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                        sendBillingError("@iap:onProductListFailure", subscribeResult);
+                        sendBillingError("iap:onProductListFailure", subscribeResult);
                         return;
                     }
 
@@ -142,7 +142,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                         skuDetailsMap.put(skuDetails.getSku(), skuDetails);
                     }
 
-                    sendEvent("@iap:onProductListSuccess", items);
+                    sendEvent("iap:onProductListSuccess", items);
                 });
             });
         });
@@ -290,7 +290,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     runnable.run();
                 }
 
-                sendBillingError("@iap:onConnectionFailure", result);
+                sendBillingError("iap:onConnectionFailure", result);
             }
 
             @Override
@@ -301,7 +301,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
     @Override
     public void onPurchasesUpdated(BillingResult result, @Nullable List<Purchase> purchases) {
         if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-            sendBillingError("@iap:onPurchaseFailure", result);
+            sendBillingError("iap:onPurchaseFailure", result);
             return;
         }
 
@@ -314,7 +314,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 item.putString("receipt", purchase.getOriginalJson());
                 item.putString("purchaseToken", purchase.getPurchaseToken());
 
-                sendEvent("@iap:onPurchaseSuccess", item);
+                sendEvent("iap:onPurchaseSuccess", item);
             }
         }
     }

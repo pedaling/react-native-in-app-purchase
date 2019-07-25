@@ -12,13 +12,13 @@ const addListener = (event, listener) => Platform.select({
   android: DeviceEventEmitter.addListener(event, listener),
 });
 
-const onProductListSuccess = e => addListener('@iap:onProductListSuccess', e);
+const onProductListSuccess = e => addListener('iap:onProductListSuccess', e);
 
-const onProductListFailure = e => addListener('@iap:onProductListFailure', e);
+const onProductListFailure = e => addListener('iap:onProductListFailure', e);
 
-const onPurchaseSuccess = e => addListener('@iap:onPurchaseSuccess', e);
+const onPurchaseSuccess = e => addListener('iap:onPurchaseSuccess', e);
 
-const onPurchaseFailure = e => addListener('@iap:onPurchaseFailure', e);
+const onPurchaseFailure = e => addListener('iap:onPurchaseFailure', e);
 
 export default {
   configure: RNInAppPurchase.configure,
