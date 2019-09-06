@@ -1,5 +1,6 @@
 
 # react-native-in-app-purchase
+👻 A dead simple In-App Purchase library for React Native
 
 ## Getting started
 
@@ -34,20 +35,7 @@
       compile project(':react-native-in-app-purchase')
   	```
 
-#### Windows
-[Read it! :D](https://github.com/ReactWindows/react-native)
-
-1. In Visual Studio add the `RNInAppPurchase.sln` in `node_modules/react-native-in-app-purchase/windows/RNInAppPurchase.sln` folder to their solution, reference from their app.
-2. Open up your `MainPage.cs` app
-  - Add `using In.App.Purchase.RNInAppPurchase;` to the usings at the top of the file
-  - Add `new RNInAppPurchasePackage()` to the `List<IReactPackage>` returned by the `Packages` method
-
-
 ## Usage
-```javascript
-import RNInAppPurchase from 'react-native-in-app-purchase';
 
-// TODO: What to do with the module?
-RNInAppPurchase;
-```
+⚠️ This project is still under development.
   
