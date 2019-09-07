@@ -18,6 +18,11 @@ const addListener = (event, listener) => Platform.select({
   android: DeviceEventEmitter,
 }).addListener(event, listener);
 
+const removeAllListeners = (event) => Platform.select({
+  ios: new NativeEventEmitter(RNInAppPurchase),
+  android: DeviceEventEmitter,
+}).removeAllListeners(event);
+
 const onFetchProducts = listener => addListener('iap:onFetchProductsSuccess', listener);
 
 const onPurchase = listener => addListener('iap:onPurchaseSuccess', listener);
@@ -30,6 +35,16 @@ const onError = (listener) => {
   addListener('iap:onPurchaseFailure', e => listener(Object.assign(e, { type: ERROR.PURCHASE })));
 }
 
+const clear = () => {
+  removeAllListeners('iap:onFetchProductsSuccess')
+  removeAllListeners('iap:onPurchaseSuccess')
+  removeAllListeners('iap:onFetchProductsFailure')
+  removeAllListeners('iap:onPurchaseFailure')
+  if (Platform.OS === 'android') {
+    removeAllListeners('iap:onConnectionFailure')
+  }
+}
+
 export default {
   configure: RNInAppPurchase.configure,
   fetchProducts: RNInAppPurchase.fetchProducts,
@@ -39,5 +54,6 @@ export default {
   onFetchProducts,
   onPurchase,
   onError,
+  clear,
   ERROR,
 }

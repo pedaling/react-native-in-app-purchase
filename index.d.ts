@@ -32,6 +32,8 @@ declare module 'react-native-in-app-purchase' {
 
   function onError(listener: (error: IAPError) => void): void;
 
+  function clear(): void;
+
   function configure(): Promise<boolean>;
 
   function fetchProducts(productIds: string[]): void;
