@@ -55,6 +55,11 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      */
     @ReactMethod
     public void configure(final Promise promise) {
+        if (client != null && client.isReady()) {
+            promise.resolve(true);
+            return;
+        }
+
         client = BillingClient.newBuilder(reactContext)
                 .enablePendingPurchases()
                 .setListener(this)
