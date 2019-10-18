@@ -1,6 +1,6 @@
 package net.yeoubi.iap;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
@@ -161,7 +161,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      *                     subscription item that user originally used.
      */
     @ReactMethod
-    public void purchase(String productId, String oldProductId) {
+    public void purchase(String productId, @Nullable String oldProductId) {
         tryConnect(() -> {
             BillingFlowParams.Builder builder = BillingFlowParams.newBuilder();
 
