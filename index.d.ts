@@ -38,9 +38,9 @@ declare module 'react-native-in-app-purchase' {
 
   function fetchProducts(productIds: string[]): void;
 
-  function purchase(productId: string): void;
+  function purchase(productId: string, oldProductId?: string): void;
 
-  function finalize(purchase: Purchase): Promise<void>;
+  function finalize(purchase: Purchase, isConsumable: boolean): Promise<void>;
 
   function flush(): Promise<Purchase[]>;
 }
