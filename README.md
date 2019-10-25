@@ -119,7 +119,7 @@ See full example [here](sample/App.js). This sample can also be downloaded from 
 
 ## Back-end Receipt Verification
 
-In fact, this isn't something that should be mentioned in this library, but I think it's critical part of implementing In-App Purchase flow - so I'll show you how I implemented it. Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
+In fact, this isn't something that should be mentioned in this library, but I think it's critical part of implementing In-App Purchase flow, so I'll show you how I implemented it. Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
 
 ```typescript
 class VerifyReceipt extends Interactor<Params, Result> {
@@ -224,3 +224,11 @@ class VerifyReceipt extends Interactor<Params, Result> {
 ```
 
 Note the part "If it's already verified". Purchases that have already been verified should also return **success**. Otherwise, the item will be provided multiple times when flushing.
+
+## Contributing
+
+Bug reports and pull requests are welcome on [GitHub](https://github.com/mu29/react-native-in-app-purchase/issues).
+
+## License
+
+The package is available as open source under the terms of the [MIT License](LICENSE).
