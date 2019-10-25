@@ -835,10 +835,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@mu29/react-native-in-app-purchase@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@mu29/react-native-in-app-purchase/-/react-native-in-app-purchase-1.0.0.tgz#4e4660a1115736b0e3647efdaab9ea5867b53ffe"
-  integrity sha512-x1qIrSKw2V0LN1dTHTZ7fH2f9BDpGeRA1SKfA//vtQOHLHtVlPjn3yQPTegjO6HquviMMkXLOI3cFJrNItAeiQ==
+"@mu29/react-native-in-app-purchase@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@mu29/react-native-in-app-purchase/-/react-native-in-app-purchase-1.0.3.tgz#9a36c11c4bd3db38a59dafb1e50cbd2c8832b56d"
+  integrity sha512-sTOt48ZhHRXIpiC10F1ySvNwXMvB6qF1APpqszMXmwoJitQ3CZ8y2kYsmHC03efEj1VAee0ACfZg2yIGm9rdLg==
 
 "@react-native-community/cli-platform-android@^3.0.0-alpha.1", "@react-native-community/cli-platform-android@^3.0.0-alpha.7":
   version "3.0.0-alpha.7"

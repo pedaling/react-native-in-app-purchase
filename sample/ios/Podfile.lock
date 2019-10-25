@@ -217,7 +217,7 @@ PODS:
     - React-cxxreact (= 0.61.2)
     - React-jsi (= 0.61.2)
     - ReactCommon/jscallinvoker (= 0.61.2)
-  - RNInAppPurchase (1.0.0):
+  - RNInAppPurchase (1.0.3):
     - React
   - Yoga (1.14.0)
 
@@ -336,7 +336,7 @@ SPEC CHECKSUMS:
   React-RCTText: e3ef6191cdb627855ff7fe8fa0c1e14094967fb8
   React-RCTVibration: fb54c732fd20405a76598e431aa2f8c2bf527de9
   ReactCommon: 5848032ed2f274fcb40f6b9ec24067787c42d479
-  RNInAppPurchase: 05648492ba2cb7d9562688c591c855666375cd16
+  RNInAppPurchase: 853d1a8c3a5a05bdfbe6d366bea6b2df03076048
   Yoga: 14927e37bd25376d216b150ab2a561773d57911f
 
 PODFILE CHECKSUM: d5a55b9338f60880cd315e1bb327831d0f1a8420
