@@ -75,6 +75,10 @@ const PRODUCT_IDS = [
 For some reasons, the `purchase` and `fetchProducts` functions are not `Promise`. So you need to register the `onPurchase` and `onFetchProducts` listeners.
 
 ```javascript
+const onFetchProducts = (products) => {
+  this.setState({ products });
+}
+
 const onPurchase = (purchase) => {
   // Validate payment on your backend server with purchase object.
   setTimeout(() => {
@@ -83,10 +87,6 @@ const onPurchase = (purchase) => {
       Alert.alert('In App Purchase', 'Purchase Succeed!');
     });
   });
-}
-
-const onFetchProducts = (products) => {
-  this.setState({ products });
 }
 
 const onError = (e) => {
@@ -120,7 +120,7 @@ InAppPurchase.purchase(item.productId) // 'rniap.sample.consumable'
 
 #### 5. Retry
 
-In some cases, your app may not be able to call the `finalize` function even the purchase was successful - such as poor internet connection. But don't worry. Purchases that are not finalized can be retrieved with the `flush` function. Send these purchases to the server to verify, and then call the `finalize` function.
+In some cases, your app may not be able to call the `finalize` function even the purchase was successful. (such as poor internet connection) Purchases that are not finalized can be retrieved with the `flush` function. Send these purchases to the server to verify, and then call the `finalize` function.
 
 ```javascript
 InAppPurchase.flush().then((purchases) => {
@@ -128,9 +128,71 @@ InAppPurchase.flush().then((purchases) => {
 });
 ```
 
-## Back-end Receipt Verification
+## Type Definitions
 
-Actually this isn't something that should be mentioned in this document. However, since it's critical part of implementing In-App Purchase flow, I'll show you how I implemented it. Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
+Type definitions of Product, Purchase and IAPError.
+
+#### Product
+
+Property    | Type   | Comment
+--------    | ----   | -----------
+productId   | string | -
+price       | string | -
+currency    | string | Currency code (USD, KRW...)
+title       | string | -
+description | string | -
+
+#### Purchase
+
+Property        | Type   | Comment
+--------        | ----   | -----------
+productId       | string | -
+transactionId   | string | -
+transactionDate | string | -
+receipt         | string | Use this property to validate iOS purchase
+purchaseToken   | string | Use this property to validate Android purchase
+
+#### IAPError
+
+Property | Type                                 | Comment
+-------- | ----                                 | -----------
+type     | FETCH_PRODUCTS, PURCHASE, CONNECTION | `CONNECTION` error is only occurs on Android.
+code     | number                               | -
+message  | string                               | -
+
+## Receipt Verification
+
+Actually this isn't something that should be mentioned in this document. However, since it's critical part of implementing In-App Purchase flow, I'll show you how I implemented it.
+
+#### Client Side
+
+```typescript
+const onPurchase = useCallback((result: Purchase) => {
+  return verifyReceipt({
+    variables: {
+      input: {
+        platform: Platform.select({
+          ios: 'apple',
+          android: 'google',
+        }),
+        productId: result.productId,
+        receipt: Platform.select({
+          ios: result.receipt,
+          android: result.purchaseToken,
+        }),
+      },
+    },
+  })
+  .then(() => InAppPurchase.finalize(result, true))
+  .then(() => Alert.alert(LocalizedStrings.COIN_PURCHASE_SUCCESS_TITLE, LocalizedStrings.COIN_PURCHASE_SUCCESS_MESSAGE))
+  .catch(e => Alert.alert(LocalizedStrings.COMMON_ERROR, e.message))
+  .finally(() => setIsLoading(false));
+}, [setIsLoading, verifyReceipt]);
+```
+
+#### Server Side
+
+Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
 
 ```typescript
 class VerifyReceipt extends Interactor<Params, Result> {
