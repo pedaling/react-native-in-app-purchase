@@ -29,11 +29,11 @@ Add `BILLING` permission to the `AndroidManifest.xml`.
 </manifest>
 ```
 
-Create your app in the Google Play Console, and add your product in the In-App Products section. Make sure set the product status to **active** so that you can view or purchase it.
+Create your app in the Google Play Console, and add product in the In-App Products section. Make sure set the product status to **active** so that you can view or purchase it.
 
 [![link config](docs/android_1.png)](docs/android_1.png?raw=true)
 
-Note that testing Android in-app billing is possible only after uploading your APK to Alpha release or above.
+Note that testing Android In-App Billing is only possible after uploading your APK to Alpha release or above.
 
 ### iOS
 
@@ -41,19 +41,23 @@ Add In-App Purchase capability in the Signing & Capabilities section of the proj
 
 [![link config](docs/ios_1.png)](docs/ios_1.png?raw=true)
 
-Create your app in the App Store Connect, and add your product in the In-App Purchases section. You may need to fill the audit information field.
+Create your app in the App Store Connect, and add product in the In-App Purchases section. You may need to fill the audit information field.
 
 [![link config](docs/ios_2.png)](docs/ios_2.png?raw=true)
 
-Testing iOS in-app purchase is possible on TestFlight.
+Testing iOS In-App Purchase is possible on TestFlight.
 
 ## Usage
 
-### Prepare product ids
+See full example [here](sample/App.js). This sample can also be downloaded from the [Play Store](https://play.google.com/store/apps/details?id=com.rninapppurchasesample).
+
+#### 1. Prepare product ids
 
 Choose the product id that you want to sell. It would be nice to have the same product id for Android and iOS.
 
 ```javascript
+import InAppPurchase from '@mu29/react-native-in-app-purchase';
+
 const PRODUCT_IDS = [
   'rniap.sample.normal',
   'rniap.sample.consumable',
@@ -61,7 +65,7 @@ const PRODUCT_IDS = [
 ];
 ```
 
-### Add Listeners
+#### 2. Add Listeners
 
 For some reasons, the `purchase` and `fetchProducts` functions are not `Promise`. So you need to register the `onPurchase` and `onFetchProducts` listeners.
 
@@ -89,21 +93,29 @@ InAppPurchase.onPurchase(onPurchase);
 InAppPurchase.onError(onError);
 ```
 
-After each purchase, you need to verify the receipt on your server. If the purchase is valid, call `finalize` function in the app.
+After each purchase, you need to verify the receipt on your server. If the purchase is valid, call `finalize` function in the app. Set whether it is consumable or not as the second argument to the `finalize` function.
 
-### Configure and Fetch Products
+#### 3. Configure and Fetch Products
+
+Once you have registered your listeners, call `configure` and `fetchProducts`. Since the library will initialize billingClient only once, you can call `configure`, `fetchProducts` multiple times.
 
 ```javascript
-import InAppPurchase from '@mu29/react-native-in-app-purchase';
-
 InAppPurchase.configure().then(() => {
   InAppPurchase.fetchProducts(PRODUCT_IDS);
 });
 ```
 
-Once you have registered your listeners, call `configure` and `fetchProducts`. Since the library will initialize billingClient only once, you can call `configure`, `fetchProducts` multiple times.
+#### 4. Purchase Product
 
-### Retry
+Call `InAppPurchase.purchase` with product id.
+
+```javascript
+InAppPurchase.purchase(item.productId) // 'rniap.sample.consumable'
+```
+
+#### 5. Retry
+
+In some cases, your app may not be able to call the `finalize` function even the purchase was successful - such as poor internet connection. But don't worry. Purchases that are not finalized can be retrieved with the `flush` function. Send these purchases to the server to verify, and then call the `finalize` function.
 
 ```javascript
 InAppPurchase.flush().then((purchases) => {
@@ -111,15 +123,9 @@ InAppPurchase.flush().then((purchases) => {
 });
 ```
 
-In some cases, your app may not be able to call the `finalize` function even the purchase was successful - such as poor internet connection. But don't worry. Purchases that are not finalized can be retrieved with the `flush` function. Send these purchases to the server to verify, and then call the `finalize` function.
-
-## Sample
-
-See full example [here](sample/App.js). This sample can also be downloaded from the [Play Store](https://play.google.com/store/apps/details?id=com.rninapppurchasesample). TestFlight link will be added soon :)
-
 ## Back-end Receipt Verification
 
-In fact, this isn't something that should be mentioned in this library, but I think it's critical part of implementing In-App Purchase flow, so I'll show you how I implemented it. Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
+Actually this isn't something that should be mentioned in this document. However, since it's critical part of implementing In-App Purchase flow, I'll show you how I implemented it. Here I used [node-iap](https://github.com/Wizcorp/node-iap) library.
 
 ```typescript
 class VerifyReceipt extends Interactor<Params, Result> {
@@ -223,7 +229,7 @@ class VerifyReceipt extends Interactor<Params, Result> {
 }
 ```
 
-Note the part "If it's already verified". Purchases that have already been verified should also return **success**. Otherwise, the item will be provided multiple times when flushing.
+Note the part *If it's already verified*. Purchases that have already been verified should also return **success**. Otherwise, the item will be provided multiple times when flushing.
 
 ## Contributing
 
