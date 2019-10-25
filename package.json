@@ -1,5 +1,5 @@
 {
-  "name": "react-native-in-app-purchase",
+  "name": "@mu29/react-native-in-app-purchase",
   "version": "1.0.0",
   "description": "👻 A dead simple in app purchase library for React Native",
   "main": "index.js",
