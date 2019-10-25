@@ -1,6 +1,6 @@
 {
   "name": "@mu29/react-native-in-app-purchase",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "👻 A dead simple in app purchase library for React Native",
   "main": "index.js",
   "repository": "https://github.com/mu29/react-native-in-app-purchase",

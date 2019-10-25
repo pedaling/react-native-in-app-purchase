@@ -1,4 +1,4 @@
-declare module 'react-native-in-app-purchase' {
+declare module '@mu29/react-native-in-app-purchase' {
   interface Product {
     productId: string;
     price: string;
