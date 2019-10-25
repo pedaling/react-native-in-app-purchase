@@ -1,4 +1,9 @@
 # react-native-in-app-purchase
+
+[![Version](https://img.shields.io/npm/v/@mu29/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@mu29/react-native-in-app-purchase)
+[![NPM](https://img.shields.io/npm/dm/@mu29/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@mu29/react-native-in-app-purchase)
+[![LICENSE](https://img.shields.io/github/license/mu29/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@mu29/react-native-in-app-purchase)
+
 👻 A dead simple In-App Purchase library for React Native
 
 ## Getting started
