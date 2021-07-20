@@ -1,4 +1,4 @@
-package net.yeoubi.iap;
+package net.class101.iap;
 
 import androidx.annotation.Nullable;
 

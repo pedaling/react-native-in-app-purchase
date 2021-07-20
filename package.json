@@ -1,16 +1,16 @@
 {
-  "name": "@mu29/react-native-in-app-purchase",
-  "version": "1.0.4",
+  "name": "@class101/react-native-in-app-purchase",
+  "version": "1.0.1",
   "description": "👻 A dead simple in app purchase library for React Native",
   "main": "index.js",
-  "repository": "https://github.com/mu29/react-native-in-app-purchase",
+  "repository": "https://github.com/pedaling/react-native-in-app-purchase",
   "keywords": [
     "react-native",
     "in-app-purchase",
     "purchase",
     "billing"
   ],
-  "author": "Injung Chung <mu29@yeoubi.net>",
+  "author": "Injung Chung <hero@101.inc>",
   "license": "MIT",
   "peerDependencies": {
     "react-native": "*"

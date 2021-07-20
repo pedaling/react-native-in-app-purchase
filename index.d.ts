@@ -1,4 +1,4 @@
-declare module '@mu29/react-native-in-app-purchase' {
+declare module "@class101/react-native-in-app-purchase" {
   interface Product {
     productId: string;
     price: string;
@@ -18,16 +18,16 @@ declare module '@mu29/react-native-in-app-purchase' {
 
   interface IAPError {
     type: {
-      FETCH_PRODUCTS: 'FETCH_PRODUCTS';
-      PURCHASE: 'PURCHASE';
-      CONNECTION: 'CONNECTION';
-    },
+      FETCH_PRODUCTS: "FETCH_PRODUCTS";
+      PURCHASE: "PURCHASE";
+      CONNECTION: "CONNECTION";
+    };
     code?: number;
     message: string;
   }
 
   function onFetchProducts(listener: (products: Product[]) => void): void;
-  
+
   function onPurchase(listener: (purchase: Purchase) => void): void;
 
   function onError(listener: (error: IAPError) => void): void;

@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import InAppPurchase from '@mu29/react-native-in-app-purchase';
+import InAppPurchase from '@class101/react-native-in-app-purchase';
 
 const PRODUCT_IDS = [
   'rniap.sample.normal',
