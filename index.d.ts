@@ -9,7 +9,7 @@ declare module "@class101/react-native-in-app-purchase" {
   }
 
   interface Purchase {
-    productId: string;
+    productIds: string[];
     transactionId: string;
     transactionDate: string;
     receipt: string;

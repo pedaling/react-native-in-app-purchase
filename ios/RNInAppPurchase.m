@@ -83,8 +83,9 @@ RCT_EXPORT_METHOD(flush: (RCTPromiseResolveBlock) resolve
             continue;
         }
 
+        NSArray* productIds = @[transaction.payment.productIdentifier];
         NSDictionary* item = @{
-                               @"productId": transaction.payment.productIdentifier,
+                               @"productIds": productIds,
                                @"transactionId": transaction.transactionIdentifier,
                                @"transactionDate": @(transaction.transactionDate.timeIntervalSince1970 * 1000),
                                @"receipt": [receipt base64EncodedStringWithOptions: 0]
@@ -158,8 +159,9 @@ RCT_EXPORT_METHOD(flush: (RCTPromiseResolveBlock) resolve
                     return;
                 }
 
+                NSArray* productIds = @[transaction.payment.productIdentifier];
                 NSDictionary* item = @{
-                                       @"productId": transaction.payment.productIdentifier,
+                                       @"productIds": productIds,
                                        @"transactionId": transaction.transactionIdentifier,
                                        @"transactionDate": @(transaction.transactionDate.timeIntervalSince1970 * 1000),
                                        @"receipt": [receipt base64EncodedStringWithOptions: 0]

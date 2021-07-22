@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/@class101/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@class101/react-native-in-app-purchase)
 [![NPM](https://img.shields.io/npm/dm/@class101/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@class101/react-native-in-app-purchase)
-[![LICENSE](https://img.shields.io/github/license/class101/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@class101/react-native-in-app-purchase)
+[![LICENSE](https://img.shields.io/github/license/pedaling/react-native-in-app-purchase.svg?style=flat-square)](https://www.npmjs.com/package/@class101/react-native-in-app-purchase)
 
 👻 A dead simple In-App Purchase library for React Native
 
@@ -147,13 +147,13 @@ Type definitions of Product, Purchase and IAPError.
 
 #### Purchase
 
-| Property        | Type   | Comment                                        |
-| --------------- | ------ | ---------------------------------------------- |
-| productId       | string | -                                              |
-| transactionId   | string | -                                              |
-| transactionDate | string | -                                              |
-| receipt         | string | Use this property to validate iOS purchase     |
-| purchaseToken   | string | Use this property to validate Android purchase |
+| Property        | Type     | Comment                                        |
+| --------------- | -------- | ---------------------------------------------- |
+| productIds      | string[] | -                                              |
+| transactionId   | string   | -                                              |
+| transactionDate | string   | -                                              |
+| receipt         | string   | Use this property to validate iOS purchase     |
+| purchaseToken   | string   | Use this property to validate Android purchase |
 
 #### IAPError
 
@@ -179,7 +179,7 @@ const onPurchase = useCallback(
             ios: "apple",
             android: "google",
           }),
-          productId: result.productId,
+          productId: result.productIds[0],
           receipt: Platform.select({
             ios: result.receipt,
             android: result.purchaseToken,
