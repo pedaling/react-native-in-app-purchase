@@ -158,11 +158,11 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * Purchase in-app or subscription item.
      *
      * @param productId Unique ID of item to purchase.
-     * @param oldProductId When upgrading or downgrading a subscription, the unique ID of the
-     *                     subscription item that user originally used.
+     * @param originalPurchaseToken When upgrading or downgrading a subscription, purchase token
+     *                              of the subscription that user originally used.
      */
     @ReactMethod
-    public void purchase(String productId, @Nullable String oldProductId) {
+    public void purchase(String productId, @Nullable String originalPurchaseToken) {
         tryConnect(() -> {
             if (getCurrentActivity() == null) {
               return;
@@ -170,10 +170,10 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
             BillingFlowParams.Builder builder = BillingFlowParams.newBuilder();
 
-            if (oldProductId != null) {
+            if (originalPurchaseToken != null) {
                 builder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
-                        .setOldSkuPurchaseToken(oldProductId)
+                        .setOldSkuPurchaseToken(originalPurchaseToken)
                         .build()
                 );
             }
