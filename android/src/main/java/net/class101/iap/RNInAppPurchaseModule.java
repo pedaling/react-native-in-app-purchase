@@ -1,5 +1,6 @@
 package net.class101.iap;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
@@ -33,9 +34,9 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
     private final ReactApplicationContext reactContext;
 
-    private BillingClient client;
+    private final Map<String, SkuDetails> skuDetailsMap;
 
-    private Map<String, SkuDetails> skuDetailsMap;
+    private BillingClient client;
 
     public RNInAppPurchaseModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -61,20 +62,20 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         }
 
         client = BillingClient.newBuilder(reactContext)
-                .enablePendingPurchases()
-                .setListener(this)
-                .build();
+            .enablePendingPurchases()
+            .setListener(this)
+            .build();
 
         client.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(BillingResult result) {
+            public void onBillingSetupFinished(@NonNull BillingResult result) {
                 int code = result.getResponseCode();
 
                 if (code == BillingClient.BillingResponseCode.OK) {
                     promise.resolve(true);
+                } else {
+                    promise.reject("configure", "Billing service setup failed with code " + code);
                 }
-
-                promise.reject("configure", "Billing service setup failed with code " + code);
             }
 
             @Override
@@ -100,18 +101,18 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             }
 
             final SkuDetailsParams inAppParams = SkuDetailsParams.newBuilder()
-                    .setSkusList(skuList)
-                    .setType(BillingClient.SkuType.INAPP).build();
+                .setSkusList(skuList)
+                .setType(BillingClient.SkuType.INAPP).build();
 
             final SkuDetailsParams subscribeParams = SkuDetailsParams.newBuilder()
-                    .setSkusList(skuList)
-                    .setType(BillingClient.SkuType.SUBS).build();
+                .setSkusList(skuList)
+                .setType(BillingClient.SkuType.SUBS).build();
 
             final WritableArray items = new WritableNativeArray();
 
             // Query in-app items
             client.querySkuDetailsAsync(inAppParams, (inAppResult, inAppDetailsList) -> {
-                if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK || inAppDetailsList == null) {
                     sendBillingError("iap:onFetchProductsFailure", inAppResult);
                     return;
                 }
@@ -130,7 +131,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
                 // Query subscription items
                 client.querySkuDetailsAsync(subscribeParams, (subscribeResult, subscribeDetailsList) -> {
-                    if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                    if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK || subscribeDetailsList == null) {
                         sendBillingError("iap:onFetchProductsFailure", subscribeResult);
                         return;
                     }
@@ -163,10 +164,18 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
     @ReactMethod
     public void purchase(String productId, @Nullable String oldProductId) {
         tryConnect(() -> {
+            if (getCurrentActivity() == null) {
+              return;
+            }
+
             BillingFlowParams.Builder builder = BillingFlowParams.newBuilder();
 
             if (oldProductId != null) {
-                builder.setOldSku(oldProductId);
+                builder.setSubscriptionUpdateParams(
+                    BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                        .setOldSkuPurchaseToken(oldProductId)
+                        .build()
+                );
             }
 
             BillingFlowParams params = builder.setSkuDetails(skuDetailsMap.get(productId)).build();
@@ -187,10 +196,14 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         tryConnect(() -> {
             String token = purchase.getString("purchaseToken");
 
+            if (token == null) {
+                return;
+            }
+
             if (isConsumable) {
                 ConsumeParams params = ConsumeParams.newBuilder()
-                        .setPurchaseToken(token)
-                        .build();
+                    .setPurchaseToken(token)
+                    .build();
 
                 client.consumeAsync(params, (result, purchaseToken) -> {
                     if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
@@ -207,8 +220,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             }
 
             AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(token)
-                    .build();
+                .setPurchaseToken(token)
+                .build();
 
             client.acknowledgePurchase(acknowledgePurchaseParams, (result) -> {
                 if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
@@ -231,41 +244,37 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      */
     @ReactMethod
     public void flush(final Promise promise) {
-        tryConnect(() -> {
-            Purchase.PurchasesResult inAppResult = client.queryPurchases(BillingClient.SkuType.INAPP);
-            Purchase.PurchasesResult subscriptionResult = client.queryPurchases(BillingClient.SkuType.SUBS);
-
+        tryConnect(() -> client.queryPurchasesAsync(BillingClient.SkuType.INAPP, (inAppResult, inAppPurchases) -> {
             if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                promise.reject("flush", inAppResult.getBillingResult().getDebugMessage());
+                promise.reject("flush", inAppResult.getDebugMessage());
                 return;
             }
 
-            if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                promise.reject("flush", subscriptionResult.getBillingResult().getDebugMessage());
-                return;
-            }
-
-            inAppResult.getPurchasesList().addAll(subscriptionResult.getPurchasesList());
-
-            WritableArray items = new WritableNativeArray();
-
-            for (Purchase purchase : inAppResult.getPurchasesList()) {
-                if (purchase.isAcknowledged()) {
-                    continue;
+            client.queryPurchasesAsync(BillingClient.SkuType.SUBS, (subscriptionResult, subscriptionPurchases) -> {
+                if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                  promise.reject("flush", subscriptionResult.getDebugMessage());
+                  return;
                 }
 
-                WritableMap item = Arguments.createMap();
-                item.putString("productId", purchase.getSku());
-                item.putString("transactionId", purchase.getOrderId());
-                item.putString("transactionDate", String.valueOf(purchase.getPurchaseTime()));
-                item.putString("receipt", purchase.getOriginalJson());
-                item.putString("purchaseToken", purchase.getPurchaseToken());
+                List<Purchase> purchaseList = new ArrayList<>();
 
-                items.pushMap(item);
-            }
+                purchaseList.addAll(inAppPurchases);
+                purchaseList.addAll(subscriptionPurchases);
 
-            promise.resolve(items);
-        });
+                WritableArray items = new WritableNativeArray();
+
+                for (Purchase purchase : purchaseList) {
+                    if (purchase.isAcknowledged()) {
+                        continue;
+                    }
+
+                    ReadableMap item = this.buildPurchaseJSON(purchase);
+                    items.pushMap(item);
+                }
+
+                promise.resolve(items);
+            });
+        }));
     }
 
     private void sendEvent(String eventName, Object params) {
@@ -293,9 +302,9 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             public void onBillingSetupFinished(BillingResult result) {
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     runnable.run();
+                } else {
+                  sendBillingError("iap:onConnectionFailure", result);
                 }
-
-                sendBillingError("iap:onConnectionFailure", result);
             }
 
             @Override
@@ -312,15 +321,24 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
         if (purchases != null) {
             for (Purchase purchase : purchases) {
-                WritableMap item = Arguments.createMap();
-                item.putString("productId", purchase.getSku());
-                item.putString("transactionId", purchase.getOrderId());
-                item.putString("transactionDate", String.valueOf(purchase.getPurchaseTime()));
-                item.putString("receipt", purchase.getOriginalJson());
-                item.putString("purchaseToken", purchase.getPurchaseToken());
-
+                ReadableMap item = this.buildPurchaseJSON(purchase);
                 sendEvent("iap:onPurchaseSuccess", item);
             }
         }
+    }
+
+    private ReadableMap buildPurchaseJSON(Purchase purchase) {
+        WritableMap item = Arguments.createMap();
+        WritableArray productIds = Arguments.createArray();
+        for (String sku : purchase.getSkus()) {
+            productIds.pushString(sku);
+        }
+        item.putArray("productIds", productIds);
+        item.putString("transactionId", purchase.getOrderId());
+        item.putString("transactionDate", String.valueOf(purchase.getPurchaseTime()));
+        item.putString("receipt", purchase.getOriginalJson());
+        item.putString("purchaseToken", purchase.getPurchaseToken());
+
+        return item;
     }
 }
