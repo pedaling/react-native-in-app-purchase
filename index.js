@@ -62,6 +62,12 @@ const purchase = (productId, originalPurchaseToken) => {
   }
 };
 
+const restore = () => {
+  if (Platform.OS === "ios") {
+    RNInAppPurchase.restore();
+  }
+};
+
 const finalize = (purchase, isConsumable) => {
   return Platform.OS === "android"
     ? RNInAppPurchase.finalize(purchase, isConsumable)
@@ -73,6 +79,7 @@ export default {
   fetchProducts: RNInAppPurchase.fetchProducts,
   flush: RNInAppPurchase.flush,
   purchase,
+  restore,
   finalize,
   onFetchProducts,
   onPurchase,

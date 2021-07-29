@@ -56,6 +56,11 @@ RCT_EXPORT_METHOD(purchase: (NSString*) productId) {
     [[SKPaymentQueue defaultQueue] addPayment: payment];
 }
 
+RCT_EXPORT_METHOD(restore) {
+    [[SKPaymentQueue defaultQueue] addTransactionObserver: self];
+    [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+}
+
 RCT_EXPORT_METHOD(finalize: (NSDictionary*) purchase
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejector: (RCTPromiseRejectBlock) reject) {
@@ -181,7 +186,27 @@ RCT_EXPORT_METHOD(flush: (RCTPromiseResolveBlock) resolve
                 break;
             }
             case SKPaymentTransactionStateRestored:
-                [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+            {
+                NSURL* receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
+                NSData* receipt = [[NSData alloc] initWithContentsOfURL: receiptURL];
+
+                if (!receipt) {
+                    [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
+                    return;
+                }
+
+                NSArray* productIds = @[transaction.payment.productIdentifier];
+                NSDictionary* item = @{
+                                       @"productIds": productIds,
+                                       @"transactionId": transaction.transactionIdentifier,
+                                       @"transactionDate": @(transaction.transactionDate.timeIntervalSince1970 * 1000),
+                                       @"receipt": [receipt base64EncodedStringWithOptions: 0]
+                                       };
+
+                [transactionsMap setObject: transaction forKey: transaction.transactionIdentifier];
+                [self sendEvent: @"iap:onPurchaseSuccess" body: item];
+                break;
+            }
                 break;
             case SKPaymentTransactionStateDeferred:
                 break;
