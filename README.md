@@ -121,7 +121,15 @@ Call `InAppPurchase.purchase` with product id.
 InAppPurchase.purchase(item.productId); // 'rniap.sample.consumable'
 ```
 
-#### 5. Retry
+#### 4. Restore Product
+
+Call `InAppPurchase.restore`
+
+```javascript
+InAppPurchase.restore();
+```
+
+#### 6. Retry
 
 In some cases, your app may not be able to call the `finalize` function even the purchase was successful. (such as poor internet connection) Purchases that are not finalized can be retrieved with the `flush` function. Send these purchases to the server to verify, and then call the `finalize` function.
 
