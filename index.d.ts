@@ -40,6 +40,8 @@ declare module "@class101/react-native-in-app-purchase" {
 
   function purchase(productId: string, originalPurchaseToken?: string): void;
 
+  function restore(): void;
+
   function finalize(purchase: Purchase, isConsumable: boolean): Promise<void>;
 
   function flush(): Promise<Purchase[]>;
