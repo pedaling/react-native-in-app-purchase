@@ -56,7 +56,7 @@ RCT_EXPORT_METHOD(purchase: (NSString*) productId) {
     [[SKPaymentQueue defaultQueue] addPayment: payment];
 }
 
-RCT_EXPORT_METHOD(restore) {
+RCT_EXPORT_METHOD(restore: (NSString *)blank) {
     [[SKPaymentQueue defaultQueue] addTransactionObserver: self];
     [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
 }

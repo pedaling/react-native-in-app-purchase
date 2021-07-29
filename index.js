@@ -64,7 +64,7 @@ const purchase = (productId, originalPurchaseToken) => {
 
 const restore = () => {
   if (Platform.OS === "ios") {
-    RNInAppPurchase.restore();
+    RNInAppPurchase.restore(null);
   }
 };
 
