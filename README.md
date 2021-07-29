@@ -121,7 +121,7 @@ Call `InAppPurchase.purchase` with product id.
 InAppPurchase.purchase(item.productId); // 'rniap.sample.consumable'
 ```
 
-#### 4. Restore Product
+#### 5. Restore Product
 
 Call `InAppPurchase.restore`
 
