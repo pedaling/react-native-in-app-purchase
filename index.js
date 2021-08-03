@@ -7,10 +7,17 @@ import {
 
 const { RNInAppPurchase } = NativeModules;
 
-const ERROR = {
+export const IAPErrorType = {
   FETCH_PRODUCTS: "FETCH_PRODUCTS",
   PURCHASE: "PURCHASE",
   CONNECTION: "CONNECTION",
+};
+
+export const IAPErrorCode = {
+  USER_CANCELED: Platform.select({
+    ios: "2",
+    android: "1",
+  }),
 };
 
 const addListener = (event, listener) =>
@@ -33,14 +40,14 @@ const onPurchase = (listener) => addListener("iap:onPurchaseSuccess", listener);
 const onError = (listener) => {
   if (Platform.OS === "android") {
     addListener("iap:onConnectionFailure", (e) =>
-      listener(Object.assign(e, { type: ERROR.CONNECTION }))
+      listener(Object.assign(e, { type: IAPErrorType.CONNECTION }))
     );
   }
   addListener("iap:onFetchProductsFailure", (e) =>
-    listener(Object.assign(e, { type: ERROR.FETCH_PRODUCTS }))
+    listener(Object.assign(e, { type: IAPErrorType.FETCH_PRODUCTS }))
   );
   addListener("iap:onPurchaseFailure", (e) =>
-    listener(Object.assign(e, { type: ERROR.PURCHASE }))
+    listener(Object.assign(e, { type: IAPErrorType.PURCHASE }))
   );
 };
 
@@ -78,5 +85,4 @@ export default {
   onPurchase,
   onError,
   clear,
-  ERROR,
 };

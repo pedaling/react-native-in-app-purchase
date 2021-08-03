@@ -26,6 +26,16 @@ declare module "@class101/react-native-in-app-purchase" {
     message: string;
   }
 
+  const IAPErrorType: {
+    FETCH_PRODUCTS: "FETCH_PRODUCTS";
+    PURCHASE: "PURCHASE";
+    CONNECTION: "CONNECTION";
+  };
+
+  const IAPErrorCode: {
+    USER_CANCELED: number;
+  };
+
   function onFetchProducts(listener: (products: Product[]) => void): void;
 
   function onPurchase(listener: (purchase: Purchase) => void): void;
