@@ -268,7 +268,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                         continue;
                     }
 
-                    ReadableMap item = this.buildPurchaseJSON(purchase);
+                    WritableMap item = this.buildPurchaseJSON(purchase);
                     items.pushMap(item);
                 }
 
@@ -327,7 +327,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         }
     }
 
-    private ReadableMap buildPurchaseJSON(Purchase purchase) {
+    private WritableMap buildPurchaseJSON(Purchase purchase) {
         WritableMap item = Arguments.createMap();
         WritableArray productIds = Arguments.createArray();
         for (String sku : purchase.getSkus()) {
