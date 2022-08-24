@@ -162,13 +162,21 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      *                              of the subscription that user originally used.
      */
     @ReactMethod
-    public void purchase(String productId, @Nullable String originalPurchaseToken) {
+    public void purchase(String productId, @Nullable String originalPurchaseToken, @Nullable String obfuscatedAccountId, @Nullable String obfuscatedProfileId) {
         tryConnect(() -> {
             if (getCurrentActivity() == null) {
               return;
             }
 
             BillingFlowParams.Builder builder = BillingFlowParams.newBuilder();
+
+            if (obfuscatedAccountId != null) {
+                builder.setObfuscatedAccountId(obfuscatedAccountId);
+            }
+
+            if (obfuscatedProfileId != null) {
+                builder.setObfuscatedProfileId(obfuscatedProfileId);
+            }
 
             if (originalPurchaseToken != null) {
                 builder.setSubscriptionUpdateParams(

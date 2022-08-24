@@ -61,9 +61,14 @@ const clear = () => {
   }
 };
 
-const purchase = (productId, originalPurchaseToken) => {
+const purchase = (productId, { originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
   if (Platform.OS === "android") {
-    RNInAppPurchase.purchase(productId, originalPurchaseToken || null);
+    RNInAppPurchase.purchase(
+      productId,
+      originalPurchaseToken || null,
+      obfuscatedAccountId || null,
+      obfuscatedProfileId || null
+    );
   } else {
     RNInAppPurchase.purchase(productId);
   }
