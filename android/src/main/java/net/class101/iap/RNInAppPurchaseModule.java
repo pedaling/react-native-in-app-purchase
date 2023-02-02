@@ -9,10 +9,12 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetails;
-import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
+import com.facebook.common.internal.ImmutableList;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -26,22 +28,24 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener {
 
     private final ReactApplicationContext reactContext;
 
-    private final Map<String, SkuDetails> skuDetailsMap;
+    private final Map<String, ProductDetails> productDetailsMap;
 
     private BillingClient client;
 
     public RNInAppPurchaseModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        this.skuDetailsMap = new HashMap<>();
+        this.productDetailsMap = new HashMap<>();
     }
 
     @Override
@@ -89,67 +93,58 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * Retrieves a list of in-app and subscription items that match the IDs contained in productIds.
      * For iOS compatibility, this method fetches in-app and subscription items at once.
      *
-     * @param productIds The IDs of the items to retrieve.
+     * @param products An array of product ID and type of the items to retrieve.
      */
     @ReactMethod
-    public void fetchProducts(ReadableArray productIds) {
+    public void fetchProducts(ReadableArray products) {
         tryConnect(() -> {
-            final List<String> skuList = new ArrayList<>();
+            ImmutableList<QueryProductDetailsParams.Product> productList = ImmutableList.of();
 
-            for (int i = 0; i < productIds.size(); i++) {
-                skuList.add(productIds.getString(i));
+            for (int i = 0; i < products.size(); i++) {
+                ReadableMap product = products.getMap(i);
+
+                String productId = product.getString("id");
+                String productType = product.getString("type");
+
+                if (productId == null || productType == null) {
+                    continue;
+                }
+
+                if (!productType.equals(BillingClient.ProductType.SUBS) && !productType.equals(BillingClient.ProductType.INAPP)) {
+                    continue;
+                }
+
+                productList.add(
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(productId)
+                        .setProductType(productType)
+                        .build()
+                );
             }
 
-            final SkuDetailsParams inAppParams = SkuDetailsParams.newBuilder()
-                .setSkusList(skuList)
-                .setType(BillingClient.SkuType.INAPP).build();
-
-            final SkuDetailsParams subscribeParams = SkuDetailsParams.newBuilder()
-                .setSkusList(skuList)
-                .setType(BillingClient.SkuType.SUBS).build();
+            QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
+                .build();
 
             final WritableArray items = new WritableNativeArray();
 
             // Query in-app items
-            client.querySkuDetailsAsync(inAppParams, (inAppResult, inAppDetailsList) -> {
-                if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK || inAppDetailsList == null) {
-                    sendBillingError("iap:onFetchProductsFailure", inAppResult);
+            client.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
+                if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                    sendBillingError("iap:onFetchProductsFailure", billingResult);
                     return;
                 }
 
-                for (SkuDetails skuDetails : inAppDetailsList) {
+                for (ProductDetails productDetails : productDetailsList) {
                     WritableMap item = Arguments.createMap();
-                    item.putString("productId", skuDetails.getSku());
-                    item.putString("price", skuDetails.getPrice());
-                    item.putString("currency", skuDetails.getPriceCurrencyCode());
-                    item.putString("title", skuDetails.getTitle());
-                    item.putString("description", skuDetails.getDescription());
-                    item.putString("iconUrl", skuDetails.getIconUrl());
+                    item.putString("productId", productDetails.getProductId());
+                    item.putString("title", productDetails.getTitle());
+                    item.putString("description", productDetails.getDescription());
                     items.pushMap(item);
-                    skuDetailsMap.put(skuDetails.getSku(), skuDetails);
+                    productDetailsMap.put(productDetails.getProductId(), productDetails);
                 }
 
-                // Query subscription items
-                client.querySkuDetailsAsync(subscribeParams, (subscribeResult, subscribeDetailsList) -> {
-                    if (subscribeResult.getResponseCode() != BillingClient.BillingResponseCode.OK || subscribeDetailsList == null) {
-                        sendBillingError("iap:onFetchProductsFailure", subscribeResult);
-                        return;
-                    }
-
-                    for (SkuDetails skuDetails : subscribeDetailsList) {
-                        WritableMap item = Arguments.createMap();
-                        item.putString("productId", skuDetails.getSku());
-                        item.putString("price", skuDetails.getPrice());
-                        item.putString("currency", skuDetails.getPriceCurrencyCode());
-                        item.putString("title", skuDetails.getTitle());
-                        item.putString("description", skuDetails.getDescription());
-                        item.putString("iconUrl", skuDetails.getIconUrl());
-                        items.pushMap(item);
-                        skuDetailsMap.put(skuDetails.getSku(), skuDetails);
-                    }
-
-                    sendEvent("iap:onFetchProductsSuccess", items);
-                });
+                sendEvent("iap:onFetchProductsSuccess", items);
             });
         });
     }
@@ -158,14 +153,24 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * Purchase in-app or subscription item.
      *
      * @param productId Unique ID of item to purchase.
-     * @param originalPurchaseToken When upgrading or downgrading a subscription, purchase token
-     *                              of the subscription that user originally used.
      */
     @ReactMethod
-    public void purchase(String productId, @Nullable String originalPurchaseToken, @Nullable String obfuscatedAccountId, @Nullable String obfuscatedProfileId) {
+    public void purchase(
+        String productId,
+        @Nullable String[] tags,
+        @Nullable String originalPurchaseToken,
+        @Nullable String obfuscatedAccountId,
+        @Nullable String obfuscatedProfileId
+    ) {
         tryConnect(() -> {
             if (getCurrentActivity() == null) {
               return;
+            }
+
+            ProductDetails productDetails = productDetailsMap.get(productId);
+
+            if (productDetails == null) {
+                return;
             }
 
             BillingFlowParams.Builder builder = BillingFlowParams.newBuilder();
@@ -181,12 +186,26 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             if (originalPurchaseToken != null) {
                 builder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
-                        .setOldSkuPurchaseToken(originalPurchaseToken)
+                        .setOldPurchaseToken(originalPurchaseToken)
                         .build()
                 );
             }
 
-            BillingFlowParams params = builder.setSkuDetails(skuDetailsMap.get(productId)).build();
+            BillingFlowParams.ProductDetailsParams.Builder productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder();
+            List<ProductDetails.SubscriptionOfferDetails> offers = productDetails.getSubscriptionOfferDetails();
+
+            if (tags != null && offers != null) {
+                offers = offers.stream()
+                    .filter(offer -> Arrays.stream(tags).allMatch(tag -> offer.getOfferTags().contains(tag)))
+                    .collect(Collectors.toList());
+
+                if (offers.size() > 0) {
+                  productDetailsParamsBuilder.setOfferToken(offers.get(0).getOfferToken());
+                }
+            }
+
+            ImmutableList<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = ImmutableList.of(productDetailsParamsBuilder.build());
+            BillingFlowParams params = builder.setProductDetailsParamsList(productDetailsParamsList).build();
 
             client.launchBillingFlow(getCurrentActivity(), params);
         });
@@ -252,37 +271,43 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      */
     @ReactMethod
     public void flush(final Promise promise) {
-        tryConnect(() -> client.queryPurchasesAsync(BillingClient.SkuType.INAPP, (inAppResult, inAppPurchases) -> {
-            if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                promise.reject("flush", inAppResult.getDebugMessage());
-                return;
-            }
-
-            client.queryPurchasesAsync(BillingClient.SkuType.SUBS, (subscriptionResult, subscriptionPurchases) -> {
-                if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                  promise.reject("flush", subscriptionResult.getDebugMessage());
-                  return;
+        tryConnect(() -> client.queryPurchasesAsync(
+            QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
+            (inAppResult, inAppPurchases) -> {
+                if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                    promise.reject("flush", inAppResult.getDebugMessage());
+                    return;
                 }
 
-                List<Purchase> purchaseList = new ArrayList<>();
+                client.queryPurchasesAsync(
+                    QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(),
+                    (subscriptionResult, subscriptionPurchases) -> {
+                        if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                            promise.reject("flush", subscriptionResult.getDebugMessage());
+                            return;
+                        }
 
-                purchaseList.addAll(inAppPurchases);
-                purchaseList.addAll(subscriptionPurchases);
+                        List<Purchase> purchaseList = new ArrayList<>();
 
-                WritableArray items = new WritableNativeArray();
+                        purchaseList.addAll(inAppPurchases);
+                        purchaseList.addAll(subscriptionPurchases);
 
-                for (Purchase purchase : purchaseList) {
-                    if (purchase.isAcknowledged()) {
-                        continue;
+                        WritableArray items = new WritableNativeArray();
+
+                        for (Purchase purchase : purchaseList) {
+                            if (purchase.isAcknowledged()) {
+                                continue;
+                            }
+
+                            ReadableMap item = this.buildPurchaseJSON(purchase);
+                            items.pushMap(item);
+                        }
+
+                        promise.resolve(items);
                     }
-
-                    ReadableMap item = this.buildPurchaseJSON(purchase);
-                    items.pushMap(item);
-                }
-
-                promise.resolve(items);
-            });
-        }));
+                );
+            }
+        ));
     }
 
     private void sendEvent(String eventName, Object params) {
@@ -307,7 +332,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
         client.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(BillingResult result) {
+            public void onBillingSetupFinished(@NonNull BillingResult result) {
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     runnable.run();
                 } else {

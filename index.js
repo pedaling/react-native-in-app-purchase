@@ -7,17 +7,22 @@ import {
 
 const { RNInAppPurchase } = NativeModules;
 
-export const IAPErrorType = {
+export const InAppPurchaseErrorType = {
   FETCH_PRODUCTS: "FETCH_PRODUCTS",
   PURCHASE: "PURCHASE",
   CONNECTION: "CONNECTION",
 };
 
-export const IAPErrorCode = {
+export const InAppPurchaseErrorCode = {
   USER_CANCELED: Platform.select({
     ios: "2",
     android: "1",
   }),
+};
+
+export const InAppPurchaseProductType = {
+  SUBSCRIPTION: "subs",
+  IN_APP: "inapp",
 };
 
 const addListener = (event, listener) =>
@@ -40,14 +45,14 @@ const onPurchase = (listener) => addListener("iap:onPurchaseSuccess", listener);
 const onError = (listener) => {
   if (Platform.OS === "android") {
     addListener("iap:onConnectionFailure", (e) =>
-      listener(Object.assign(e, { type: IAPErrorType.CONNECTION }))
+      listener(Object.assign(e, { type: IapErrorType.CONNECTION }))
     );
   }
   addListener("iap:onFetchProductsFailure", (e) =>
-    listener(Object.assign(e, { type: IAPErrorType.FETCH_PRODUCTS }))
+    listener(Object.assign(e, { type: IapErrorType.FETCH_PRODUCTS }))
   );
   addListener("iap:onPurchaseFailure", (e) =>
-    listener(Object.assign(e, { type: IAPErrorType.PURCHASE }))
+    listener(Object.assign(e, { type: IapErrorType.PURCHASE }))
   );
 };
 
@@ -61,10 +66,11 @@ const clear = () => {
   }
 };
 
-const purchase = (productId, { originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
+const purchase = (productId, { tags, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
   if (Platform.OS === "android") {
     RNInAppPurchase.purchase(
       productId,
+      tags || null,
       originalPurchaseToken || null,
       obfuscatedAccountId || null,
       obfuscatedProfileId || null

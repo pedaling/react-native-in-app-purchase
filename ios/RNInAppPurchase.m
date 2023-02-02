@@ -37,8 +37,8 @@ RCT_EXPORT_METHOD(configure: (RCTPromiseResolveBlock) resolve
     resolve(@([SKPaymentQueue canMakePayments]));
 }
 
-RCT_EXPORT_METHOD(fetchProducts: (NSArray*) productIds) {
-    NSSet* identifiers = [NSSet setWithArray: productIds];
+RCT_EXPORT_METHOD(fetchProducts: (NSArray*) products) {
+    NSSet* identifiers = [NSSet setWithArray: [products valueForKey: @"id"]];
     SKProductsRequest* productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers: identifiers];
     productsRequest.delegate = self;
     [productsRequest start];

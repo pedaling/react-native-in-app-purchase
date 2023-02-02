@@ -1,11 +1,8 @@
 declare module "@class101/react-native-in-app-purchase" {
   interface Product {
     productId: string;
-    price: string;
-    currency: string;
     title: string;
     description: string;
-    iconUrl: string;
   }
 
   interface Purchase {
@@ -26,15 +23,20 @@ declare module "@class101/react-native-in-app-purchase" {
     message: string;
   }
 
-  const IAPErrorType: {
+  const InAppPurchaseErrorType: {
     FETCH_PRODUCTS: "FETCH_PRODUCTS";
     PURCHASE: "PURCHASE";
     CONNECTION: "CONNECTION";
   };
 
-  const IAPErrorCode: {
+  const InAppPurchaseErrorCode: {
     USER_CANCELED: number;
   };
+
+  enum InAppPurchaseProductType {
+    SUBSCRIPTION = "subs",
+    IN_APP = "inapp"
+  }
 
   function onFetchProducts(listener: (products: Product[]) => void): void;
 
@@ -46,11 +48,12 @@ declare module "@class101/react-native-in-app-purchase" {
 
   function configure(): Promise<boolean>;
 
-  function fetchProducts(productIds: string[]): void;
+  function fetchProducts(products: { id: string; type: InAppPurchaseProductType }[]): void;
 
   function purchase(
     productId: string,
     extras: {
+      tags?: string[];
       originalPurchaseToken?: string;
       obfuscatedAccountId?: string;
       obfuscatedProfileId?: string;

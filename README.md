@@ -133,7 +133,7 @@ InAppPurchase.flush().then((purchases) => {
 
 ## Type Definitions
 
-Type definitions of Product, Purchase and IAPError.
+Type definitions of Product, Purchase and InAppPurchaseError.
 
 #### Product
 
@@ -155,7 +155,7 @@ Type definitions of Product, Purchase and IAPError.
 | receipt         | string   | Use this property to validate iOS purchase     |
 | purchaseToken   | string   | Use this property to validate Android purchase |
 
-#### IAPError
+#### InAppPurchaseError
 
 | Property | Type                                 | Comment                                       |
 | -------- | ------------------------------------ | --------------------------------------------- |
