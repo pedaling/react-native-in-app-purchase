@@ -21,8 +21,8 @@ export const InAppPurchaseErrorCode = {
 };
 
 export const InAppPurchaseProductType = {
-  SUBSCRIPTION: "subs",
-  IN_APP: "inapp",
+  Subscription: "subs",
+  InApp: "inapp",
 };
 
 const addListener = (event, listener) =>

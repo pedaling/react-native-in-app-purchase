@@ -34,8 +34,8 @@ declare module "@class101/react-native-in-app-purchase" {
   };
 
   enum InAppPurchaseProductType {
-    SUBSCRIPTION = "subs",
-    IN_APP = "inapp"
+    Subscription = "subs",
+    InApp = "inapp"
   }
 
   function onFetchProducts(listener: (products: Product[]) => void): void;
