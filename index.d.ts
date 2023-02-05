@@ -1,8 +1,12 @@
 declare module "@class101/react-native-in-app-purchase" {
   interface Product {
     productId: string;
+    planId?: string;
+    offerId?: string;
     title: string;
     description: string;
+    price: string;
+    currency: string;
   }
 
   interface Purchase {

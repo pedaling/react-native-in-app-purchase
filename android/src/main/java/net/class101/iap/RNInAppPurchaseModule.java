@@ -158,6 +158,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     if (productType.equals(BillingClient.ProductType.INAPP)) {
                         WritableMap item = Arguments.createMap();
                         item.putString("productId", productDetails.get().getProductId());
+                        item.putString("offerId", offerId);
                         item.putString("title", productDetails.get().getTitle());
                         item.putString("description", productDetails.get().getDescription());
 
@@ -185,9 +186,10 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     if (offerDetails.isPresent()) {
                         WritableMap item = Arguments.createMap();
                         item.putString("productId", productDetails.get().getProductId());
+                        item.putString("planId", planId);
+                        item.putString("offerId", offerId);
                         item.putString("title", productDetails.get().getTitle());
                         item.putString("description", productDetails.get().getDescription());
-
                         item.putString("price", offerDetails.get().getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice());
                         item.putString("currency", offerDetails.get().getPricingPhases().getPricingPhaseList().get(0).getPriceCurrencyCode());
 
