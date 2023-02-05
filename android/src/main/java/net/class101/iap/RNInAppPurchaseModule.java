@@ -28,11 +28,10 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener {
 
@@ -135,12 +134,68 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     return;
                 }
 
+                for (int i = 0; i < products.size(); i++) {
+                    ReadableMap product = products.getMap(i);
+
+                    String productId = product.getString("id");
+                    String productType = product.getString("type");
+                    String planId = product.getString("planId");
+                    String offerId = product.getString("offerId");
+
+                    if (productId == null || productType == null) {
+                        continue;
+                    }
+
+                    if (!productType.equals(BillingClient.ProductType.SUBS) && !productType.equals(BillingClient.ProductType.INAPP)) {
+                        continue;
+                    }
+
+                    Optional<ProductDetails> productDetails = productDetailsList.stream().filter(details -> details.getProductId().equals(productId)).findFirst();
+                    if (!productDetails.isPresent()) {
+                        continue;
+                    }
+
+                    if (productType.equals(BillingClient.ProductType.INAPP)) {
+                        WritableMap item = Arguments.createMap();
+                        item.putString("productId", productDetails.get().getProductId());
+                        item.putString("title", productDetails.get().getTitle());
+                        item.putString("description", productDetails.get().getDescription());
+
+                        ProductDetails.OneTimePurchaseOfferDetails offerDetails = productDetails.get().getOneTimePurchaseOfferDetails();
+                        if (offerDetails != null) {
+                            item.putString("price", offerDetails.getFormattedPrice());
+                            item.putString("currency", offerDetails.getPriceCurrencyCode());
+                        }
+
+                        items.pushMap(item);
+                        continue;
+                    }
+
+                    List<ProductDetails.SubscriptionOfferDetails> offerDetailsList = productDetails.get().getSubscriptionOfferDetails();
+
+                    if (offerDetailsList == null || offerDetailsList.size() == 0) {
+                        continue;
+                    }
+
+                    Optional<ProductDetails.SubscriptionOfferDetails> offerDetails = offerDetailsList.stream()
+                        .filter(details -> planId == null || details.getBasePlanId().equals(planId))
+                        .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
+                        .findFirst();
+
+                    if (offerDetails.isPresent()) {
+                        WritableMap item = Arguments.createMap();
+                        item.putString("productId", productDetails.get().getProductId());
+                        item.putString("title", productDetails.get().getTitle());
+                        item.putString("description", productDetails.get().getDescription());
+
+                        item.putString("price", offerDetails.get().getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice());
+                        item.putString("currency", offerDetails.get().getPricingPhases().getPricingPhaseList().get(0).getPriceCurrencyCode());
+
+                        items.pushMap(item);
+                    }
+                }
+
                 for (ProductDetails productDetails : productDetailsList) {
-                    WritableMap item = Arguments.createMap();
-                    item.putString("productId", productDetails.getProductId());
-                    item.putString("title", productDetails.getTitle());
-                    item.putString("description", productDetails.getDescription());
-                    items.pushMap(item);
                     productDetailsMap.put(productDetails.getProductId(), productDetails);
                 }
 
@@ -157,14 +212,15 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
     @ReactMethod
     public void purchase(
         String productId,
-        @Nullable String[] tags,
+        @Nullable String planId,
+        @Nullable String offerId,
         @Nullable String originalPurchaseToken,
         @Nullable String obfuscatedAccountId,
         @Nullable String obfuscatedProfileId
     ) {
         tryConnect(() -> {
             if (getCurrentActivity() == null) {
-              return;
+                return;
             }
 
             ProductDetails productDetails = productDetailsMap.get(productId);
@@ -192,16 +248,14 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             }
 
             BillingFlowParams.ProductDetailsParams.Builder productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder();
-            List<ProductDetails.SubscriptionOfferDetails> offers = productDetails.getSubscriptionOfferDetails();
+            List<ProductDetails.SubscriptionOfferDetails> offerDetailsList = productDetails.getSubscriptionOfferDetails();
 
-            if (tags != null && offers != null) {
-                offers = offers.stream()
-                    .filter(offer -> Arrays.stream(tags).allMatch(tag -> offer.getOfferTags().contains(tag)))
-                    .collect(Collectors.toList());
-
-                if (offers.size() > 0) {
-                  productDetailsParamsBuilder.setOfferToken(offers.get(0).getOfferToken());
-                }
+            if (offerDetailsList != null) {
+                offerDetailsList.stream()
+                    .filter(details -> planId == null || details.getBasePlanId().equals(planId))
+                    .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
+                    .findFirst()
+                    .ifPresent(details -> productDetailsParamsBuilder.setOfferToken(details.getOfferToken()));
             }
 
             ImmutableList<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = ImmutableList.of(productDetailsParamsBuilder.build());
@@ -336,7 +390,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     runnable.run();
                 } else {
-                  sendBillingError("iap:onConnectionFailure", result);
+                    sendBillingError("iap:onConnectionFailure", result);
                 }
             }
 

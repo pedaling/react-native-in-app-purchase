@@ -45,14 +45,14 @@ const onPurchase = (listener) => addListener("iap:onPurchaseSuccess", listener);
 const onError = (listener) => {
   if (Platform.OS === "android") {
     addListener("iap:onConnectionFailure", (e) =>
-      listener(Object.assign(e, { type: IapErrorType.CONNECTION }))
+      listener(Object.assign(e, { type: InAppPurchaseErrorType.CONNECTION }))
     );
   }
   addListener("iap:onFetchProductsFailure", (e) =>
-    listener(Object.assign(e, { type: IapErrorType.FETCH_PRODUCTS }))
+    listener(Object.assign(e, { type: InAppPurchaseErrorType.FETCH_PRODUCTS }))
   );
   addListener("iap:onPurchaseFailure", (e) =>
-    listener(Object.assign(e, { type: IapErrorType.PURCHASE }))
+    listener(Object.assign(e, { type: InAppPurchaseErrorType.PURCHASE }))
   );
 };
 
@@ -66,11 +66,12 @@ const clear = () => {
   }
 };
 
-const purchase = (productId, { tags, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
+const purchase = (productId, { planId, offerId, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
   if (Platform.OS === "android") {
     RNInAppPurchase.purchase(
       productId,
-      tags || null,
+      planId || null,
+      offerId || null,
       originalPurchaseToken || null,
       obfuscatedAccountId || null,
       obfuscatedProfileId || null

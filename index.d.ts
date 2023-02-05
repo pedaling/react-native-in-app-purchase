@@ -48,12 +48,18 @@ declare module "@class101/react-native-in-app-purchase" {
 
   function configure(): Promise<boolean>;
 
-  function fetchProducts(products: { id: string; type: InAppPurchaseProductType }[]): void;
+  function fetchProducts(products: {
+    id: string;
+    type: InAppPurchaseProductType;
+    planId: string;
+    offerId: string;
+  }[]): void;
 
   function purchase(
     productId: string,
     extras: {
-      tags?: string[];
+      planId?: string;
+      offerId?: string;
       originalPurchaseToken?: string;
       obfuscatedAccountId?: string;
       obfuscatedProfileId?: string;
