@@ -252,6 +252,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             BillingFlowParams.ProductDetailsParams.Builder productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder();
             List<ProductDetails.SubscriptionOfferDetails> offerDetailsList = productDetails.getSubscriptionOfferDetails();
 
+            productDetailsParamsBuilder.setProductDetails(productDetails);
+
             if (offerDetailsList != null) {
                 offerDetailsList.stream()
                     .filter(details -> planId == null || details.getBasePlanId().equals(planId))
