@@ -55,8 +55,8 @@ declare module "@class101/react-native-in-app-purchase" {
   function fetchProducts(products: {
     id: string;
     type: InAppPurchaseProductType;
-    planId: string;
-    offerId: string;
+    planId?: string;
+    offerId?: string;
   }[]): void;
 
   function purchase(
