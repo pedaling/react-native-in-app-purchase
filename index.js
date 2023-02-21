@@ -66,7 +66,7 @@ const clear = () => {
   }
 };
 
-const purchase = (productId, { planId, offerId, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
+const purchase = (productId, { planId, offerId, userId, keyIdentifier, nonce, signature, timestamp, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
   if (Platform.OS === "android") {
     RNInAppPurchase.purchase(
       productId,
@@ -77,7 +77,7 @@ const purchase = (productId, { planId, offerId, originalPurchaseToken, obfuscate
       obfuscatedProfileId || null
     );
   } else {
-    RNInAppPurchase.purchase(productId);
+    RNInAppPurchase.purchase(productId, offerId, userId, keyIdentifier, nonce, signature, timestamp);
   }
 };
 

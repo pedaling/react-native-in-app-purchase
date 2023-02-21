@@ -44,7 +44,13 @@ RCT_EXPORT_METHOD(fetchProducts: (NSArray*) products) {
     [productsRequest start];
 }
 
-RCT_EXPORT_METHOD(purchase: (NSString*) productId) {
+RCT_EXPORT_METHOD(purchase: (NSString*) productId
+                  offerId: (NSString*) offerId
+                  userId: (NSString*) userId
+                  keyIdentifier: (NSString*) keyIdentifier
+                  nonce: (NSString*) nonceString
+                  signature: (NSString*) signature
+                  timestamp: (NSNumber*) timestamp) {
     SKProduct* product = productsMap[productId];
 
     if (!product) {
@@ -52,7 +58,21 @@ RCT_EXPORT_METHOD(purchase: (NSString*) productId) {
         return;
     }
 
-    SKPayment* payment = [SKPayment paymentWithProduct: product];
+    SKMutablePayment* payment = [SKMutablePayment paymentWithProduct: product];
+    payment.applicationUsername = userId;
+    
+    if (@available(iOS 12.2, *)) {
+        NSUUID* nonce = nil;
+        if (nonceString != nil) {
+            nonce = [[NSUUID new] initWithUUIDString:nonceString];
+        }
+        
+        if (offerId != nil && keyIdentifier != nil && nonce != nil && signature != nil && timestamp != nil) {
+            SKPaymentDiscount* paymentDiscount = [[SKPaymentDiscount new] initWithIdentifier:offerId keyIdentifier:keyIdentifier nonce:nonce signature:signature timestamp:timestamp];
+            payment.paymentDiscount = paymentDiscount;
+        }
+    }
+    
     [[SKPaymentQueue defaultQueue] addPayment: payment];
 }
 
