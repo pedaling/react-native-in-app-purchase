@@ -64,6 +64,11 @@ declare module "@class101/react-native-in-app-purchase" {
     extras: {
       planId?: string;
       offerId?: string;
+      userId?: string;
+      keyIdentifier?: string;
+      nonce?: string;
+      signature?: string;
+      timestamp?: number;
       originalPurchaseToken?: string;
       obfuscatedAccountId?: string;
       obfuscatedProfileId?: string;
