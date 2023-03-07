@@ -40,6 +40,14 @@ const removeAllListeners = (event) =>
 const onFetchProducts = (listener) =>
   addListener("iap:onFetchProductsSuccess", listener);
 
+const fetchReceipt = () => {
+  if (Platform.OS === "ios") {
+    return RNInAppPurchase.fetchReceipt();
+  } else {
+    return Promise.resolve(undefined);
+  }
+};
+
 const onPurchase = (listener) => addListener("iap:onPurchaseSuccess", listener);
 
 const onError = (listener) => {
@@ -93,6 +101,7 @@ export default {
   flush: RNInAppPurchase.flush,
   purchase,
   finalize,
+  fetchReceipt,
   onFetchProducts,
   onPurchase,
   onError,

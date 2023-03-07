@@ -118,6 +118,20 @@ RCT_EXPORT_METHOD(flush: (RCTPromiseResolveBlock) resolve
     resolve(items);
 }
 
+RCT_EXPORT_METHOD(fetchReceipt: (RCTPromiseResolveBlock) resolve
+                  rejector: (RCTPromiseRejectBlock) reject) {
+    NSURL* receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
+    NSData* receipt = [[NSData alloc] initWithContentsOfURL: receiptURL];
+    
+    if (receipt == nil) {
+        resolve(nil);
+        return;
+    }
+    
+    NSString* encodedReceipt = [receipt base64EncodedStringWithOptions: 0];
+    resolve(encodedReceipt);
+}
+
 - (void) startObserving {
     hasListeners = true;
 }
