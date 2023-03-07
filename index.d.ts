@@ -52,6 +52,8 @@ declare module "@class101/react-native-in-app-purchase" {
 
   function configure(): Promise<boolean>;
 
+  function fetchReceipt(): Promise<string | undefined>;
+
   function fetchProducts(products: {
     id: string;
     type: InAppPurchaseProductType;
