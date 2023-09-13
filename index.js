@@ -50,6 +50,8 @@ const fetchReceipt = () => {
 
 const onPurchase = (listener) => addListener("iap:onPurchaseSuccess", listener);
 
+const onAlternativeBillingFlow = (listener) => addListener("iap:onAlternativeBillingFlow", listener);
+
 const onError = (listener) => {
   if (Platform.OS === "android") {
     addListener("iap:onConnectionFailure", (e) =>
@@ -67,6 +69,7 @@ const onError = (listener) => {
 const clear = () => {
   removeAllListeners("iap:onFetchProductsSuccess");
   removeAllListeners("iap:onPurchaseSuccess");
+  removeAllListeners("iap:onAlternativeBillingFlow");
   removeAllListeners("iap:onFetchProductsFailure");
   removeAllListeners("iap:onPurchaseFailure");
   if (Platform.OS === "android") {
@@ -104,6 +107,7 @@ export default {
   fetchReceipt,
   onFetchProducts,
   onPurchase,
+  onAlternativeBillingFlow,
   onError,
   clear,
 };

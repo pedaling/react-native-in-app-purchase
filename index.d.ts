@@ -46,6 +46,8 @@ declare module "@class101/react-native-in-app-purchase" {
 
   function onPurchase(listener: (purchase: Purchase) => void): void;
 
+  function onAlternativeBillingFlow(listener: (token: string) => void): void;
+
   function onError(listener: (error: IAPError) => void): void;
 
   function clear(): void;

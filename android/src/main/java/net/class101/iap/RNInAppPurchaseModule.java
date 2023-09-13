@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.AlternativeBillingListener;
+import com.android.billingclient.api.AlternativeChoiceDetails;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -33,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener {
+public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener, AlternativeBillingListener {
 
     private final ReactApplicationContext reactContext;
 
@@ -65,9 +67,10 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
         }
 
         client = BillingClient.newBuilder(reactContext)
-            .enablePendingPurchases()
-            .setListener(this)
-            .build();
+                .setListener(this)
+                .enablePendingPurchases()
+                .enableAlternativeBilling(this)
+                .build();
 
         client.startConnection(new BillingClientStateListener() {
             @Override
@@ -416,6 +419,12 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 sendEvent("iap:onPurchaseSuccess", item);
             }
         }
+    }
+
+    @Override
+    public void userSelectedAlternativeBilling(@NonNull AlternativeChoiceDetails alternativeChoiceDetails) {
+        String token = alternativeChoiceDetails.getExternalTransactionToken();
+        sendEvent("iap:onAlternativeBillingFlow", token);
     }
 
     private ReadableMap buildPurchaseJSON(Purchase purchase) {
