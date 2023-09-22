@@ -77,6 +77,12 @@ const clear = () => {
   }
 };
 
+const configure = (options) => {
+  return Platform.OS === "android"
+    ? RNInAppPurchase.configure(options)
+    : RNInAppPurchase.configure();
+}
+
 const purchase = (productId, { planId, offerId, userId, keyIdentifier, nonce, signature, timestamp, originalPurchaseToken, obfuscatedAccountId, obfuscatedProfileId }) => {
   if (Platform.OS === "android") {
     RNInAppPurchase.purchase(
@@ -99,7 +105,7 @@ const finalize = (purchase, isConsumable) => {
 };
 
 export default {
-  configure: RNInAppPurchase.configure,
+  configure,
   fetchProducts: RNInAppPurchase.fetchProducts,
   flush: RNInAppPurchase.flush,
   purchase,
