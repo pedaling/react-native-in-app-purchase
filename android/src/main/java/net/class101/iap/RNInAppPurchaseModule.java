@@ -43,6 +43,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
     private BillingClient client;
 
+    private Boolean isAlternativeBillingEnable = false;
+
     public RNInAppPurchaseModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
@@ -60,17 +62,30 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * @param promise Promise that receives initialization result.
      */
     @ReactMethod
-    public void configure(final Promise promise) {
-        if (client != null && client.isReady()) {
-            promise.resolve(true);
-            return;
+    public void configure(ReadableMap options, final Promise promise) {
+        boolean isAlternativeBillingEnable = options != null && options.getBoolean("isAlternativeBillingEnable");
+
+        if (client != null) {
+            if (client.isReady() && this.isAlternativeBillingEnable == isAlternativeBillingEnable) {
+                promise.resolve(true);
+                return;
+            }
+
+            client.endConnection();
+            client = null;
         }
 
-        client = BillingClient.newBuilder(reactContext)
+        BillingClient.Builder builder = BillingClient.newBuilder(reactContext)
                 .setListener(this)
-                .enablePendingPurchases()
-                .enableAlternativeBilling(this)
-                .build();
+                .enablePendingPurchases();
+
+        if (isAlternativeBillingEnable) {
+            builder.enableAlternativeBilling(this);
+        }
+
+        this.isAlternativeBillingEnable = isAlternativeBillingEnable;
+
+        client = builder.build();
 
         client.startConnection(new BillingClientStateListener() {
             @Override
