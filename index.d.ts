@@ -53,7 +53,7 @@ declare module "@class101/react-native-in-app-purchase" {
   function clear(): void;
 
   function configure(
-    options?: { isAlternativePurchaseEnable: boolean }
+    options?: { isAlternativeBillingEnable: boolean }
   ): Promise<boolean>;
 
   function fetchReceipt(): Promise<string | undefined>;
