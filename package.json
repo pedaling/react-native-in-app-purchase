@@ -3,6 +3,7 @@
   "version": "2.0.9",
   "description": "👻 A dead simple in app purchase library for React Native",
   "main": "index.js",
+  "types": "index.d.ts",
   "repository": "https://github.com/pedaling/react-native-in-app-purchase",
   "keywords": [
     "react-native",
@@ -14,5 +15,18 @@
   "license": "MIT",
   "peerDependencies": {
     "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "InAppPurchase",
+    "type": "all",
+    "jsSrcsDir": ".",
+    "outputDir": {
+      "ios": "ios/generated",
+      "android": "android/generated"
+    },
+    "includesGeneratedCode": true,
+    "android": {
+      "javaPackageName": "net.class101.iap"
+    }
   }
 }
