@@ -4,18 +4,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
-import com.android.billingclient.api.AlternativeBillingListener;
-import com.android.billingclient.api.AlternativeChoiceDetails;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
+import com.android.billingclient.api.UserChoiceBillingListener;
+import com.android.billingclient.api.UserChoiceDetails;
 import com.facebook.common.internal.ImmutableList;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener, AlternativeBillingListener {
+public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements PurchasesUpdatedListener, UserChoiceBillingListener {
 
     private final ReactApplicationContext reactContext;
 
@@ -77,10 +78,10 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
         BillingClient.Builder builder = BillingClient.newBuilder(reactContext)
                 .setListener(this)
-                .enablePendingPurchases();
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build());
 
         if (isAlternativeBillingEnable) {
-            builder.enableAlternativeBilling(this);
+            builder.enableUserChoiceBilling(this);
         }
 
         this.isAlternativeBillingEnable = isAlternativeBillingEnable;
@@ -132,16 +133,16 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                 }
 
                 productList.add(
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(productId)
-                        .setProductType(productType)
-                        .build()
+                        QueryProductDetailsParams.Product.newBuilder()
+                                .setProductId(productId)
+                                .setProductType(productType)
+                                .build()
                 );
             }
 
             QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
-                .setProductList(productList)
-                .build();
+                    .setProductList(productList)
+                    .build();
 
             final WritableArray items = new WritableNativeArray();
 
@@ -197,9 +198,9 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
                     }
 
                     Optional<ProductDetails.SubscriptionOfferDetails> offerDetails = offerDetailsList.stream()
-                        .filter(details -> planId == null || details.getBasePlanId().equals(planId))
-                        .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
-                        .findFirst();
+                            .filter(details -> planId == null || details.getBasePlanId().equals(planId))
+                            .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
+                            .findFirst();
 
                     if (offerDetails.isPresent()) {
                         WritableMap item = Arguments.createMap();
@@ -231,12 +232,12 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      */
     @ReactMethod
     public void purchase(
-        String productId,
-        @Nullable String planId,
-        @Nullable String offerId,
-        @Nullable String originalPurchaseToken,
-        @Nullable String obfuscatedAccountId,
-        @Nullable String obfuscatedProfileId
+            String productId,
+            @Nullable String planId,
+            @Nullable String offerId,
+            @Nullable String originalPurchaseToken,
+            @Nullable String obfuscatedAccountId,
+            @Nullable String obfuscatedProfileId
     ) {
         tryConnect(() -> {
             if (getCurrentActivity() == null) {
@@ -261,9 +262,9 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
             if (originalPurchaseToken != null) {
                 builder.setSubscriptionUpdateParams(
-                    BillingFlowParams.SubscriptionUpdateParams.newBuilder()
-                        .setOldPurchaseToken(originalPurchaseToken)
-                        .build()
+                        BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                                .setOldPurchaseToken(originalPurchaseToken)
+                                .build()
                 );
             }
 
@@ -274,10 +275,10 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
             if (offerDetailsList != null) {
                 offerDetailsList.stream()
-                    .filter(details -> planId == null || details.getBasePlanId().equals(planId))
-                    .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
-                    .findFirst()
-                    .ifPresent(details -> productDetailsParamsBuilder.setOfferToken(details.getOfferToken()));
+                        .filter(details -> planId == null || details.getBasePlanId().equals(planId))
+                        .filter(details -> offerId == null || (details.getOfferId() != null && details.getOfferId().equals(offerId)))
+                        .findFirst()
+                        .ifPresent(details -> productDetailsParamsBuilder.setOfferToken(details.getOfferToken()));
             }
 
             ImmutableList<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = ImmutableList.of(productDetailsParamsBuilder.build());
@@ -291,7 +292,7 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
      * For consumable items, call the {@link BillingClient#consumeAsync} method, otherwise call the
      * {@link BillingClient#acknowledgePurchase} method and finish the purchase flow.
      *
-     * @param purchase Purchase object received after payment is made.
+     * @param purchase     Purchase object received after payment is made.
      * @param isConsumable Whether it is consumable or not.
      */
     @ReactMethod
@@ -305,8 +306,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
 
             if (isConsumable) {
                 ConsumeParams params = ConsumeParams.newBuilder()
-                    .setPurchaseToken(token)
-                    .build();
+                        .setPurchaseToken(token)
+                        .build();
 
                 client.consumeAsync(params, (result, purchaseToken) -> {
                     if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
@@ -323,8 +324,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             }
 
             AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                .setPurchaseToken(token)
-                .build();
+                    .setPurchaseToken(token)
+                    .build();
 
             client.acknowledgePurchase(acknowledgePurchaseParams, (result) -> {
                 if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
@@ -348,48 +349,48 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
     @ReactMethod
     public void flush(final Promise promise) {
         tryConnect(() -> client.queryPurchasesAsync(
-            QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
-            (inAppResult, inAppPurchases) -> {
-                if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                    promise.reject("flush", inAppResult.getDebugMessage());
-                    return;
-                }
-
-                client.queryPurchasesAsync(
-                    QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(),
-                    (subscriptionResult, subscriptionPurchases) -> {
-                        if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                            promise.reject("flush", subscriptionResult.getDebugMessage());
-                            return;
-                        }
-
-                        List<Purchase> purchaseList = new ArrayList<>();
-
-                        purchaseList.addAll(inAppPurchases);
-                        purchaseList.addAll(subscriptionPurchases);
-
-                        WritableArray items = new WritableNativeArray();
-
-                        for (Purchase purchase : purchaseList) {
-                            if (purchase.isAcknowledged()) {
-                                continue;
-                            }
-
-                            ReadableMap item = this.buildPurchaseJSON(purchase);
-                            items.pushMap(item);
-                        }
-
-                        promise.resolve(items);
+                QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
+                (inAppResult, inAppPurchases) -> {
+                    if (inAppResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                        promise.reject("flush", inAppResult.getDebugMessage());
+                        return;
                     }
-                );
-            }
+
+                    client.queryPurchasesAsync(
+                            QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(),
+                            (subscriptionResult, subscriptionPurchases) -> {
+                                if (subscriptionResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                                    promise.reject("flush", subscriptionResult.getDebugMessage());
+                                    return;
+                                }
+
+                                List<Purchase> purchaseList = new ArrayList<>();
+
+                                purchaseList.addAll(inAppPurchases);
+                                purchaseList.addAll(subscriptionPurchases);
+
+                                WritableArray items = new WritableNativeArray();
+
+                                for (Purchase purchase : purchaseList) {
+                                    if (purchase.isAcknowledged()) {
+                                        continue;
+                                    }
+
+                                    ReadableMap item = this.buildPurchaseJSON(purchase);
+                                    items.pushMap(item);
+                                }
+
+                                promise.resolve(items);
+                            }
+                    );
+                }
         ));
     }
 
     private void sendEvent(String eventName, Object params) {
         getReactApplicationContext()
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-            .emit(eventName, params);
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, params);
     }
 
     private void sendBillingError(String errorName, BillingResult result) {
@@ -417,7 +418,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
             }
 
             @Override
-            public void onBillingServiceDisconnected() {}
+            public void onBillingServiceDisconnected() {
+            }
         });
     }
 
@@ -437,8 +439,8 @@ public class RNInAppPurchaseModule extends ReactContextBaseJavaModule implements
     }
 
     @Override
-    public void userSelectedAlternativeBilling(@NonNull AlternativeChoiceDetails alternativeChoiceDetails) {
-        String token = alternativeChoiceDetails.getExternalTransactionToken();
+    public void userSelectedAlternativeBilling(@NonNull UserChoiceDetails userChoiceDetails) {
+        String token = userChoiceDetails.getExternalTransactionToken();
         sendEvent("iap:onAlternativeBillingFlow", token);
     }
 
