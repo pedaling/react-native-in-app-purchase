@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Alert,
   View,
@@ -9,57 +9,57 @@ import {
 import InAppPurchase from '@class101/react-native-in-app-purchase';
 
 const PRODUCT_IDS = [
-  'rniap.sample.normal',
-  'rniap.sample.consumable',
-  'rniap.sample.subscribe',
+  {id: 'rniap.sample.normal',},
+  {
+    id: 'rniap.sample.consumable'},
+  { id: 'rniap.sample.subscribe'},
 ];
 
-export default class App extends Component {
-  state = {
-    products: [],
+const App = () => {
+  const [products, setProducts] = useState([]);
+  
+  const handleFetchProducts = (fetchedProducts) => {
+    console.log(fetchedProducts);
+    setProducts(fetchedProducts);
   };
 
-  componentDidMount() {
-    // Set event handlers
-    InAppPurchase.onFetchProducts(this.onFetchProducts);
-    InAppPurchase.onPurchase(this.onPurchase);
-    InAppPurchase.onError(this.onError);
-
-    // Configure and fetch products
-    InAppPurchase.configure().then(() => {
-      InAppPurchase.fetchProducts(PRODUCT_IDS);
-    });
-  }
-
-  onPurchase = (purchase) => {
-    // Validate payment on your backend server with purchase object.
+  const handlePurchase = (purchase) => {
     setTimeout(() => {
-      // Complete the purchase flow by calling finalize function.
       InAppPurchase.finalize(purchase, purchase.productId === 'rniap.sample.consumable').then(() => {
         Alert.alert('In App Purchase', 'Purchase Succeed!');
       });
     });
-  }
+  };
 
-  onFetchProducts = (products) => {
-    console.log(products);
-    this.setState({ products });
-  }
 
-  onError = (e) => {
-    console.log(e);
-  }
+  useEffect(() => {
+    const handleError = (error) => {
+      console.log(error);
+    };
 
-  flush = () => {
-    // If the validation - finalization process is not performed properly, (ex: Internet connection)
-    // call this function to fetch pending purchases, and restart the validation process.
+    InAppPurchase.onFetchProducts(handleFetchProducts);
+    InAppPurchase.onPurchase(handlePurchase);
+    InAppPurchase.onError(handleError);
+
+    InAppPurchase.configure().then(() => {
+      InAppPurchase.fetchProducts(PRODUCT_IDS);
+    });
+
+    return () => {
+      InAppPurchase.clear();
+    };
+  }, []);
+
+  const flush = useCallback(() => {
     InAppPurchase.flush().then((purchases) => {
       console.log(purchases);
-      purchases.forEach(this.onPurchase);
+      purchases.forEach((purchase) => {
+        handlePurchase(purchase);
+      });
     });
-  }
+  }, []);
 
-  renderItem = (item) => (
+  const renderItem = useCallback((item) => (
     <TouchableOpacity
       key={item.title}
       activeOpacity={0.8}
@@ -75,25 +75,23 @@ export default class App extends Component {
         </Text>
       </View>
     </TouchableOpacity>
-  )
+  ), []);
 
-  render() {
-    return (
-      <View style={styles.container}>
-        {this.state.products.map(this.renderItem)}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={this.flush}
-          style={[styles.item, styles.button]}
-        >
-          <Text style={styles.text}>
-            Flush uncompleted purchases
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-}
+  return (
+    <View style={styles.container}>
+      {products.map(renderItem)}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={flush}
+        style={[styles.item, styles.button]}
+      >
+        <Text style={styles.text}>
+          Flush uncompleted purchases
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -137,3 +135,5 @@ const styles = StyleSheet.create({
     color: '#FAFAFA',
   },
 });
+
+export default App;
