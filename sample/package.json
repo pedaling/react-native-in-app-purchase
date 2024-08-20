@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@class101/react-native-in-app-purchase": "1.0.3",
+    "@class101/react-native-in-app-purchase": "link:../",
     "react": "17.0.1",
     "react-native": "0.64.2"
   },
