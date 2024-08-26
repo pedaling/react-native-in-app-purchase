@@ -15,7 +15,9 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '10.0'
 
   s.source       = { :git => "https://github.com/pedaling/react-native-in-app-purchase.git", :tag => "v#{s.version}" }
-  s.source_files  = "ios/**/*.{h,m}"
+  s.source_files  = "ios/**/*.{h,m,mm,swift}"
 
   s.dependency 'React'
+
+  install_modules_dependencies(s)
 end
